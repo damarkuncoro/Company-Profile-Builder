@@ -351,27 +351,11 @@ const App: React.FC = () => {
 
     // Data helpers
     const getVal = (idx: number, def: string) => companyData.values?.[idx] || def;
-    const getSvc = (idx: number, defT: string, defD: string) => ({
-        title: companyData.services?.[idx]?.title || defT,
-        desc: companyData.services?.[idx]?.description || defD
-    });
     const getAdv = (idx: number, defT: string, defD: string) => ({
         title: companyData.advantages?.[idx]?.title || defT,
         desc: companyData.advantages?.[idx]?.description || defD
     });
-    const getHist = (idx: number, defY: string, defE: string) => ({
-        year: companyData.history?.[idx]?.year || defY,
-        event: companyData.history?.[idx]?.event || defE
-    });
     const getLegal = (idx: number, def: string) => companyData.legalities?.[idx] || def;
-    const getTeam = (idx: number, defN: string, defR: string) => ({
-        name: companyData.teamMembers?.[idx]?.name || defN,
-        role: companyData.teamMembers?.[idx]?.role || defR
-    });
-    const getProj = (idx: number, defN: string, defD: string) => ({
-        name: companyData.projects?.[idx]?.name || defN,
-        desc: companyData.projects?.[idx]?.description || defD
-    });
     const getClient = (idx: number, def: string) => companyData.clients?.[idx] || def;
 
     // SPECIAL CASE: MULTI-PAGE GENERATION
@@ -470,27 +454,30 @@ const App: React.FC = () => {
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 450, width: 694, height: 400, backgroundColor: '#cbd5e1', borderRadius: 0, zIndex: 1 }, // Image placeholder
         ]);
 
-        // 4. Sejarah Perusahaan
-        const h1 = getHist(0, '2003', t.ph_history_1);
-        const h2 = getHist(1, '2010', t.ph_history_2);
-        const h3 = getHist(2, '2024', t.ph_history_3);
+        // 4. Sejarah Perusahaan (Dynamic History)
+        const historyList = companyData.history.length > 0 ? companyData.history : [
+            { year: '2003', event: t.ph_history_1 },
+            { year: '2010', event: t.ph_history_2 },
+            { year: '2024', event: t.ph_history_3 }
+        ];
 
-        addPage(THEME.colors.bgWhite, [
-             ...createCommonElements(t.title_history, 4),
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 98, y: 160, width: 4, height: 700, backgroundColor: THEME.colors.line, zIndex: 0 },
-             
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: 180, width: 20, height: 20, backgroundColor: THEME.colors.accent, borderRadius: 10, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: h1.year, x: 130, y: 175, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.accent, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: h1.event, x: 130, y: 210, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
+        const historyPageElements = [
+            ...createCommonElements(t.title_history, 4),
+            // Vertical Line
+            { id: generateId(), type: ElementType.SHAPE, content: '', x: 98, y: 160, width: 4, height: Math.min(historyList.slice(0, 5).length * 160, 800), backgroundColor: THEME.colors.line, zIndex: 0 }
+        ];
 
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: 380, width: 20, height: 20, backgroundColor: THEME.colors.primary, borderRadius: 10, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: h2.year, x: 130, y: 375, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: h2.event, x: 130, y: 410, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: 580, width: 20, height: 20, backgroundColor: THEME.colors.accentPop, borderRadius: 10, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: h3.year, x: 130, y: 575, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.accentPop, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: h3.event, x: 130, y: 610, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
-        ]);
+        historyList.slice(0, 5).forEach((item, idx) => { // Max 5 items per page
+            const yBase = 180 + (idx * 160);
+            const color = idx % 3 === 0 ? THEME.colors.accent : (idx % 3 === 1 ? THEME.colors.primary : THEME.colors.accentPop);
+            
+            historyPageElements.push(
+                { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: yBase, width: 20, height: 20, backgroundColor: color, borderRadius: 10, zIndex: 1 },
+                { id: generateId(), type: ElementType.TEXT, content: item.year || 'YEAR', x: 130, y: yBase - 5, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: color, zIndex: 1 },
+                { id: generateId(), type: ElementType.TEXT, content: item.event || 'Event description', x: 130, y: yBase + 30, width: 500, height: 100, ...THEME.fonts.body, zIndex: 1 }
+            );
+        });
+        addPage(THEME.colors.bgWhite, historyPageElements);
 
         // 5. Legalitas & Sertifikasi
         const l1 = getLegal(0, "Surat Izin Usaha");
@@ -545,25 +532,23 @@ const App: React.FC = () => {
              { id: generateId(), type: ElementType.TEXT, content: v4, x: 434, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
         ]);
 
-        // 8. Layanan Utama
-        const s1 = getSvc(0, "01. Service Name", t.ph_service_desc);
-        const s2 = getSvc(1, "02. Service Name", t.ph_service_desc);
-        const s3 = getSvc(2, "03. Service Name", t.ph_service_desc);
+        // 8. Layanan Utama (Dynamic Services)
+        const serviceList = companyData.services.length > 0 ? companyData.services : [
+            { title: "01. Service Name", description: t.ph_service_desc },
+            { title: "02. Service Name", description: t.ph_service_desc },
+            { title: "03. Service Name", description: t.ph_service_desc }
+        ];
 
-        addPage(THEME.colors.bgWhite, [
-             ...createCommonElements(t.title_services, 8),
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: s1.title, x: 50, y: 180, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: s1.desc, x: 50, y: 220, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 300, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: s2.title, x: 50, y: 320, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: s2.desc, x: 50, y: 360, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 440, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: s3.title, x: 50, y: 460, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: s3.desc, x: 50, y: 500, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
-        ]);
+        const servicePageElements = [ ...createCommonElements(t.title_services, 8) ];
+        serviceList.slice(0, 5).forEach((item, idx) => {
+            const yBase = 160 + (idx * 140);
+            servicePageElements.push(
+                { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: yBase, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
+                { id: generateId(), type: ElementType.TEXT, content: item.title || 'Service Title', x: 50, y: yBase + 20, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
+                { id: generateId(), type: ElementType.TEXT, content: item.description || 'Description', x: 50, y: yBase + 60, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 }
+            );
+        });
+        addPage(THEME.colors.bgWhite, servicePageElements);
 
         // 9. Keunggulan Perusahaan
         const a1 = getAdv(0, t.adv_1_title, t.adv_1_desc);
@@ -595,68 +580,69 @@ const App: React.FC = () => {
              { id: generateId(), type: ElementType.TEXT, content: "Photo Data Center / Infrastructure", x: 50, y: 660, width: 300, height: 20, ...THEME.fonts.caption, zIndex: 1 },
         ]);
 
-        // 11. Klien & Partner
-        addPage(THEME.colors.bgAlt, [
+        // 11. Klien & Partner (Dynamic Grid)
+        const clientsList = companyData.clients.filter(c => c.trim() !== "");
+        const displayClients = clientsList.length > 0 ? clientsList : ["CLIENT 1", "CLIENT 2", "CLIENT 3", "CLIENT 4"];
+
+        const clientPageElements = [
              ...createCommonElements(t.title_clients, 11),
-             { id: generateId(), type: ElementType.TEXT, content: t.client_trusted_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: t.client_trusted_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 }
+        ];
+        
+        displayClients.slice(0, 8).forEach((clientName, idx) => {
+             const row = Math.floor(idx / 4);
+             const col = idx % 4;
+             const x = 50 + (col * 180);
+             const y = 220 + (row * 100);
              
-             // Client Logo Grid
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(0, "CLIENT 1"), x: 50, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+             clientPageElements.push(
+                { id: generateId(), type: ElementType.SHAPE, content: '', x: x, y: y, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+                { id: generateId(), type: ElementType.TEXT, content: clientName, x: x, y: y + 30, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 }
+             );
+        });
+        addPage(THEME.colors.bgAlt, clientPageElements);
 
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 231, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(1, "CLIENT 2"), x: 231, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+        // 12. Portofolio Proyek (Dynamic)
+        const projectList = companyData.projects.length > 0 ? companyData.projects : [
+             { name: "Project A", description: "Description A" },
+             { name: "Project B", description: "Description B" }
+        ];
 
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 412, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(2, "CLIENT 3"), x: 412, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+        const projectPageElements = [ ...createCommonElements(t.title_portfolio, 12) ];
+        projectList.slice(0, 4).forEach((proj, idx) => {
+            const row = Math.floor(idx / 2); // 2 per row
+            const col = idx % 2;
+            const x = 50 + (col * 364);
+            const y = 160 + (row * 240);
+            
+            projectPageElements.push(
+                 { id: generateId(), type: ElementType.SHAPE, content: '', x: x, y: y, width: 330, height: 160, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 }, // Image placeholder
+                 { id: generateId(), type: ElementType.TEXT, content: proj.name || 'Project Name', x: x, y: y + 170, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                 { id: generateId(), type: ElementType.TEXT, content: proj.description || 'Project Desc', x: x, y: y + 200, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 }
+            );
+        });
+        addPage(THEME.colors.bgWhite, projectPageElements);
 
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 593, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(3, "CLIENT 4"), x: 593, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+        // 13. Tim Manajemen (Dynamic)
+        const teamList = companyData.teamMembers.length > 0 ? companyData.teamMembers : [
+             { name: "Name 1", role: "Role 1" },
+             { name: "Name 2", role: "Role 2" }
+        ];
 
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(4, "CLIENT 5"), x: 50, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+        const teamPageElements = [ ...createCommonElements(t.title_team, 13) ];
+        teamList.slice(0, 4).forEach((member, idx) => {
+             const row = Math.floor(idx / 2);
+             const col = idx % 2;
+             const x = 125 + (col * 350);
+             const y = 200 + (row * 250);
 
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 231, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(5, "CLIENT 6"), x: 231, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 412, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(6, "CLIENT 7"), x: 412, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 593, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: getClient(7, "CLIENT 8"), x: 593, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
-        ]);
-
-        // 12. Portofolio Proyek
-        const p1 = getProj(0, "Project Name A", "Description of project A.");
-        const p2 = getProj(1, "Project Name B", "Description of project B.");
-
-        addPage(THEME.colors.bgWhite, [
-             ...createCommonElements(t.title_portfolio, 12),
-             
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 330, height: 200, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: p1.name, x: 50, y: 370, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: p1.desc, x: 50, y: 400, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 160, width: 330, height: 200, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: p2.name, x: 414, y: 370, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: p2.desc, x: 414, y: 400, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 },
-        ]);
-
-        // 13. Tim Manajemen
-        const tm1 = getTeam(0, "Full Name", t.ph_team_role_1);
-        const tm2 = getTeam(1, "Full Name", t.ph_team_role_2);
-
-        addPage(THEME.colors.bgAlt, [
-             ...createCommonElements(t.title_team, 13),
-             
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 150, y: 200, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: tm1.name, x: 125, y: 360, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: tm1.role, x: 125, y: 390, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 500, y: 200, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: tm2.name, x: 475, y: 360, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: tm2.role, x: 475, y: 390, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 },
-        ]);
+             teamPageElements.push(
+                 { id: generateId(), type: ElementType.SHAPE, content: '', x: x + 25, y: y, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
+                 { id: generateId(), type: ElementType.TEXT, content: member.name || 'Name', x: x, y: y + 160, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
+                 { id: generateId(), type: ElementType.TEXT, content: member.role || 'Role', x: x, y: y + 190, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 }
+             );
+        });
+        addPage(THEME.colors.bgAlt, teamPageElements);
 
         // 14. Kontak & Lokasi (Back Cover)
         addPage(THEME.colors.primaryDark, [
@@ -785,43 +771,104 @@ const App: React.FC = () => {
     });
   };
 
-  // --- TEMPLATES ---
+  // --- TEMPLATES (THEME APPLICATOR) ---
   const applyTemplate = (type: TemplateType) => {
-    let newElements: CanvasElement[] = [];
-    let bgColor = '#ffffff';
+    // Define Theme Palettes
+    let theme = {
+        bgColor: '#ffffff',
+        h1Color: '#000000',
+        h2Color: '#333333',
+        bodyColor: '#444444',
+        shapePrimary: '#000000',
+        shapeAccent: '#888888',
+        isDark: false
+    };
 
     if (type === TemplateType.CORPORATE) {
-        bgColor = '#f0f9ff';
-        newElements = [
-            { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 150, backgroundColor: '#1e3a8a', zIndex: 0 },
-            { id: generateId(), type: ElementType.TEXT, content: companyData.name || 'COMPANY NAME', x: 40, y: 40, width: 500, height: 60, fontSize: 42, fontWeight: 'bold', color: '#ffffff', zIndex: 1 },
-            { id: generateId(), type: ElementType.TEXT, content: 'Professional Profile', x: 40, y: 90, width: 300, height: 30, fontSize: 18, color: '#93c5fd', zIndex: 1 },
-            { id: generateId(), type: ElementType.TEXT, content: 'ABOUT US', x: 40, y: 200, width: 200, height: 40, fontSize: 24, fontWeight: 'bold', color: '#1e3a8a', zIndex: 1 },
-            { id: generateId(), type: ElementType.TEXT, content: companyData.about || 'We are a leading company...', x: 40, y: 250, width: 700, height: 100, fontSize: 14, color: '#334155', zIndex: 1 },
-        ];
+        // High Contrast Professional - Classic Blue & Slate
+        theme = {
+            bgColor: '#ffffff',
+            h1Color: '#020617', // Slate 950 (Almost Black)
+            h2Color: '#172554', // Blue 950 (Deep Navy)
+            bodyColor: '#334155', // Slate 700 (Dark Gray for readability)
+            shapePrimary: '#1e40af', // Blue 800
+            shapeAccent: '#60a5fa', // Blue 400
+            isDark: false
+        };
     } else if (type === TemplateType.CREATIVE) {
-        bgColor = '#ffffff';
-        newElements = [
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 500, y: 0, width: 300, height: 1123, backgroundColor: '#f3e8ff', zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: companyData.name || 'CREATIVE\nAGENCY', x: 50, y: 100, width: 400, height: 150, fontSize: 60, fontWeight: 'bold', color: '#000000', zIndex: 1 },
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 260, width: 100, height: 10, backgroundColor: '#9333ea', zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: 'OUR VISION', x: 540, y: 100, width: 200, height: 40, fontSize: 20, fontWeight: 'bold', color: '#6b21a8', zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: companyData.vision || 'To create amazing things.', x: 540, y: 150, width: 200, height: 200, fontSize: 14, color: '#4b5563', zIndex: 1 },
-        ];
+        // Bold & Modern - Clean White with Violet/Pink Accents
+        theme = {
+            bgColor: '#ffffff', 
+            h1Color: '#4c1d95', // Violet 900
+            h2Color: '#be185d', // Pink 700
+            bodyColor: '#1f2937', // Gray 800
+            shapePrimary: '#7c3aed', // Violet 600
+            shapeAccent: '#f472b6', // Pink 400
+            isDark: false
+        };
     } else if (type === TemplateType.STARTUP) {
-        bgColor = '#18181b';
-        newElements = [
-            { id: generateId(), type: ElementType.TEXT, content: companyData.name || 'STARTUP.IO', x: 300, y: 500, width: 400, height: 60, fontSize: 48, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 1 },
-            { id: generateId(), type: ElementType.TEXT, content: 'Future of Technology', x: 300, y: 560, width: 400, height: 30, fontSize: 18, color: '#22c55e', textAlign: 'center', zIndex: 1 },
-            { id: generateId(), type: ElementType.SHAPE, content: '', x: 100, y: 100, width: 594, height: 923, backgroundColor: 'transparent', zIndex: 0 },
-        ];
+        // Minimalist Dark - High Legibility
+        theme = {
+            bgColor: '#111827', // Gray 900
+            h1Color: '#ffffff', // White
+            h2Color: '#38bdf8', // Sky 400 (Bright Blue)
+            bodyColor: '#e5e7eb', // Gray 200 (High contrast against dark bg)
+            shapePrimary: '#374151', // Gray 700
+            shapeAccent: '#0ea5e9', // Sky 500
+            isDark: true
+        };
     }
 
-    updateActivePage({
-        elements: newElements,
-        backgroundColor: bgColor,
-        backgroundImage: undefined
-    });
+    // Apply Theme to ALL Pages
+    setCanvasState(prev => ({
+        ...prev,
+        pages: prev.pages.map(page => {
+            // Keep background image if set, otherwise update color
+            const newBg = page.backgroundImage ? page.backgroundColor : theme.bgColor;
+
+            return {
+                ...page,
+                backgroundColor: newBg,
+                elements: page.elements.map(el => {
+                    // Update Text Colors
+                    if (el.type === ElementType.TEXT) {
+                        const fontSize = el.fontSize || 16;
+                        let newColor = theme.bodyColor; // Default
+                        
+                        // Smart Typography Mapping
+                        if (fontSize >= 24) {
+                            newColor = theme.h1Color;
+                        } else if (fontSize >= 18) {
+                            newColor = theme.h2Color;
+                        } else {
+                            newColor = theme.bodyColor;
+                        }
+
+                        // Special Case: Inverting colors for Dark Mode
+                        // If we are switching to Dark Mode, ensure any previously dark text becomes light
+                        if (theme.isDark && (el.color === '#000000' || el.color?.startsWith('#3') || el.color?.startsWith('#1'))) {
+                             // Use the mapped color (which is already light)
+                             // This block prevents random dark text from remaining dark on dark bg
+                        }
+                        
+                        return { ...el, color: newColor };
+                    }
+                    
+                    // Update Shape Colors
+                    if (el.type === ElementType.SHAPE) {
+                        // Heuristic: Thin lines/small dots = Accent, Big blocks = Primary
+                        const isThin = el.height < 15 || el.width < 15;
+                        return { 
+                            ...el, 
+                            backgroundColor: isThin ? theme.shapeAccent : theme.shapePrimary 
+                        };
+                    }
+
+                    return el;
+                })
+            };
+        })
+    }));
   };
 
   // --- MOUSE EVENT HANDLERS FOR DRAG ---

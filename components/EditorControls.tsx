@@ -312,6 +312,23 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
     });
   };
 
+  // Add new item to array field
+  const addArrayItem = (field: keyof CompanyData, emptyItem: any) => {
+      setCompanyData(prev => ({
+          ...prev,
+          [field]: [...(prev[field] as any[]), emptyItem]
+      }));
+  };
+
+  // Remove item from array field
+  const removeArrayItem = (field: keyof CompanyData, index: number) => {
+      setCompanyData(prev => {
+          const newArr = [...(prev[field] as any[])];
+          newArr.splice(index, 1);
+          return { ...prev, [field]: newArr };
+      });
+  };
+
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden shadow-xl z-20 no-print">
       
@@ -456,11 +473,38 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
             {/* SECTION 4: HISTORY & LEGALITY */}
             <FormSection title="History & Legality">
                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Timeline Events</label>
-                    {[0, 1, 2].map(i => (
-                        <div key={i} className="flex gap-1 mb-1">
-                            <input type="text" value={companyData.history?.[i]?.year || ''} onChange={(e) => updateArrayItem('history', i, 'year', e.target.value)} className="w-16 border border-gray-300 rounded px-2 py-1 text-xs" placeholder="Year" />
-                            <input type="text" value={companyData.history?.[i]?.event || ''} onChange={(e) => updateArrayItem('history', i, 'event', e.target.value)} className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs" placeholder="Event Description" />
+                    <div className="flex justify-between items-center mb-1">
+                        <label className="block text-[10px] uppercase font-bold text-gray-500">Timeline Events</label>
+                        <button 
+                            onClick={() => addArrayItem('history', { year: '', event: '' })}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Add Event"
+                        >
+                            <Plus size={14} />
+                        </button>
+                    </div>
+                    {companyData.history.map((item, i) => (
+                        <div key={i} className="flex gap-1 mb-1 items-start">
+                            <input 
+                                type="text" 
+                                value={item.year || ''} 
+                                onChange={(e) => updateArrayItem('history', i, 'year', e.target.value)} 
+                                className="w-16 border border-gray-300 rounded px-2 py-1 text-xs" 
+                                placeholder="Year" 
+                            />
+                            <textarea
+                                value={item.event || ''} 
+                                onChange={(e) => updateArrayItem('history', i, 'event', e.target.value)} 
+                                className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs resize-none h-8" 
+                                placeholder="Event Description" 
+                            />
+                            <button 
+                                onClick={() => removeArrayItem('history', i)}
+                                className="text-gray-400 hover:text-red-500 p-1"
+                                title="Remove"
+                            >
+                                <Trash2 size={12} />
+                            </button>
                         </div>
                     ))}
                 </div>
@@ -622,17 +666,17 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                             step="0.05"
                             value={selectedElement.opacity ?? 1} 
                             onChange={(e) => updateElement(selectedElement.id, { opacity: parseFloat(e.target.value) })} 
-                            className="w-full" 
+                            className="w-full accent-blue-600" 
                         />
                         
-                        <label className="text-[10px] text-gray-500 uppercase mt-2 block">Corner Radius: {selectedElement.borderRadius || 0}px</label>
+                        <label className="text-[10px] text-gray-500 uppercase mt-2 block">Border Radius: {selectedElement.borderRadius || 0}px</label>
                         <input 
                             type="range" 
                             min="0" 
                             max="100" 
                             value={selectedElement.borderRadius || 0} 
                             onChange={(e) => updateElement(selectedElement.id, { borderRadius: parseInt(e.target.value) })} 
-                            className="w-full" 
+                            className="w-full accent-blue-600" 
                         />
                     </div>
                  )}
