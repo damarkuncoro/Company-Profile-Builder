@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { EditorControls } from './components/EditorControls';
 import { DraggableElement } from './components/DraggableElement';
-import { CanvasElement, CanvasState, CompanyData, ElementType, TemplateType, AutoLayoutType, Page } from './types';
+import { CanvasElement, CanvasState, CompanyData, ElementType, TemplateType, AutoLayoutType, Page, Language } from './types';
 import { MousePointer2, ChevronLeft, ChevronRight, Plus, Trash2, Layers } from 'lucide-react';
 
 // Simple ID generator
@@ -10,8 +10,144 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const INITIAL_CANVAS_WIDTH = 794; // A4 @ 96 DPI
 const INITIAL_CANVAS_HEIGHT = 1123;
 
+// --- TRANSLATION DICTIONARY ---
+export const DICTIONARY = {
+    id: {
+        // UI
+        ui_data: "Data",
+        ui_design: "Desain",
+        ui_export: "Ekspor",
+        ui_page: "Halaman",
+        
+        // Content Titles
+        title_cover: "PROFIL PERUSAHAAN",
+        title_foreword: "KATA PENGANTAR",
+        title_director_speech: "SAMBUTAN DIREKTUR UTAMA",
+        title_about: "TENTANG KAMI",
+        title_who: "SIAPA KAMI",
+        title_history: "SEJARAH PERUSAHAAN",
+        title_legality: "LEGALITAS & SERTIFIKASI",
+        title_compliance: "Kepatuhan & Standarisasi",
+        title_strategy: "ARAH STRATEGIS",
+        title_vision: "VISI KAMI",
+        title_mission: "MISI KAMI",
+        title_values: "NILAI PERUSAHAAN",
+        title_services: "LAYANAN UTAMA",
+        title_advantages: "KEUNGGULAN KAMI",
+        title_infra: "INFRASTRUKTUR & TEKNOLOGI",
+        title_clients: "KLIEN & PARTNER",
+        title_portfolio: "PORTOFOLIO PROYEK",
+        title_team: "TIM MANAJEMEN",
+        title_contact: "HUBUNGI KAMI",
+        
+        // Placeholders & Defaults
+        ph_director_quote: `"Kami berkomitmen untuk memberikan solusi terbaik bagi klien kami. Perjalanan kami adalah inovasi dan dedikasi. Kami percaya pada pertumbuhan berkelanjutan dan kemitraan jangka panjang."`,
+        ph_history_1: "Pendirian Perusahaan. Dimulai dengan 5 karyawan.",
+        ph_history_2: "Ekspansi Nasional. Membuka 3 kantor cabang baru.",
+        ph_history_3: "Kemitraan Global tercapai dengan berbagai vendor internasional.",
+        ph_legality_desc: "Kami mematuhi standar dan peraturan internasional untuk memastikan kualitas tertinggi dalam setiap layanan.",
+        ph_service_desc: "Deskripsi lengkap mengenai layanan. Kami menyediakan solusi berkualitas tinggi yang disesuaikan dengan kebutuhan Anda.",
+        ph_team_role_1: "Direktur Utama",
+        ph_team_role_2: "Direktur Operasional",
+        ph_contact_map: "Peta Lokasi Kantor",
+
+        // Long Text Defaults
+        default_about: "Perusahaan kami berdedikasi untuk memberikan solusi terbaik di industri. Dengan pengalaman bertahun-tahun dan tim ahli, kami menghadirkan keunggulan dalam setiap layanan.",
+        default_vision: "Menjadi pemimpin global dalam memberikan solusi inovatif yang memberdayakan bisnis dan masyarakat.",
+        default_mission: "Memberikan produk dan layanan berkualitas tinggi yang melebihi ekspektasi pelanggan melalui perbaikan berkelanjutan.",
+        
+        // Advantage Items
+        adv_1_title: "Tim Profesional",
+        adv_1_desc: "Ahli bersertifikasi dengan pengalaman bertahun-tahun.",
+        adv_2_title: "Layanan 24/7",
+        adv_2_desc: "Selalu tersedia untuk membantu Anda kapan saja.",
+        adv_3_title: "Teknologi Terkini",
+        adv_3_desc: "Menggunakan perangkat dan teknologi paling mutakhir.",
+        adv_4_title: "Harga Kompetitif",
+        adv_4_desc: "Nilai terbaik untuk investasi bisnis Anda.",
+
+        // Infra & Clients
+        infra_facility_title: "Fasilitas Kami",
+        infra_facility_desc: "Dibangun untuk mendukung operasional mission-critical dengan sistem redundansi penuh.",
+        client_trusted_title: "Partner Terpercaya",
+        
+        // Values
+        val_integrity: "INTEGRITAS",
+        val_innovation: "INOVASI",
+        val_excellence: "KEUNGGULAN",
+        val_collab: "KERJASAMA"
+    },
+    en: {
+        // UI
+        ui_data: "Data",
+        ui_design: "Design",
+        ui_export: "Export",
+        ui_page: "Page",
+
+        // Content Titles
+        title_cover: "COMPANY PROFILE",
+        title_foreword: "FOREWORD",
+        title_director_speech: "DIRECTOR'S MESSAGE",
+        title_about: "ABOUT US",
+        title_who: "WHO WE ARE",
+        title_history: "COMPANY HISTORY",
+        title_legality: "LEGALITY & CERTIFICATION",
+        title_compliance: "Compliance & Standardization",
+        title_strategy: "STRATEGIC DIRECTION",
+        title_vision: "OUR VISION",
+        title_mission: "OUR MISSION",
+        title_values: "CORE VALUES",
+        title_services: "MAIN SERVICES",
+        title_advantages: "OUR ADVANTAGES",
+        title_infra: "INFRASTRUCTURE & TECHNOLOGY",
+        title_clients: "CLIENTS & PARTNERS",
+        title_portfolio: "PROJECT PORTFOLIO",
+        title_team: "MANAGEMENT TEAM",
+        title_contact: "CONTACT US",
+
+        // Placeholders & Defaults
+        ph_director_quote: `"We are committed to providing the best solutions for our clients. Our journey is one of innovation and dedication. We believe in sustainable growth and long-term partnerships."`,
+        ph_history_1: "Company Establishment. Started with 5 employees.",
+        ph_history_2: "National Expansion. Opened 3 new branch offices.",
+        ph_history_3: "Global Partnership achieved with various international vendors.",
+        ph_legality_desc: "We adhere to international standards and regulations to ensure the highest quality in every service.",
+        ph_service_desc: "Complete description of the service. We provide high-quality solutions tailored to your needs.",
+        ph_team_role_1: "Chief Executive Officer",
+        ph_team_role_2: "Chief Operating Officer",
+        ph_contact_map: "Office Location Map",
+
+        // Long Text Defaults
+        default_about: "Our company is dedicated to delivering the best solutions in the industry. With years of experience and a team of experts, we deliver excellence in every service.",
+        default_vision: "To be a global leader in providing innovative solutions that empower businesses and communities.",
+        default_mission: "Deliver high-quality products and services that exceed customer expectations through continuous improvement.",
+        
+        // Advantage Items
+        adv_1_title: "Professional Team",
+        adv_1_desc: "Certified experts with years of experience.",
+        adv_2_title: "24/7 Service",
+        adv_2_desc: "Always available to assist you at any time.",
+        adv_3_title: "Latest Technology",
+        adv_3_desc: "Using the latest devices and technology.",
+        adv_4_title: "Competitive Price",
+        adv_4_desc: "Best value for your business investment.",
+
+        // Infra & Clients
+        infra_facility_title: "Our Facilities",
+        infra_facility_desc: "Built to support mission-critical operations with full redundancy systems.",
+        client_trusted_title: "Trusted Partners",
+
+        // Values
+        val_integrity: "INTEGRITY",
+        val_innovation: "INNOVATION",
+        val_excellence: "EXCELLENCE",
+        val_collab: "COLLABORATION"
+    }
+};
+
 const App: React.FC = () => {
   // --- STATE ---
+  const [language, setLanguage] = useState<Language>('id'); // Default to Indonesian
+
   const [companyData, setCompanyData] = useState<CompanyData>({
     name: '',
     tagline: '',
@@ -19,7 +155,19 @@ const App: React.FC = () => {
     about: '',
     vision: '',
     mission: '',
-    contact: ''
+    contact: '',
+    directorName: '',
+    directorRole: '',
+    directorMessage: '',
+    history: Array(3).fill({ year: '', event: '' }),
+    legalities: Array(3).fill(''),
+    values: Array(4).fill(''),
+    services: Array(3).fill({ title: '', description: '' }),
+    advantages: Array(4).fill({ title: '', description: '' }),
+    teamMembers: Array(2).fill({ name: '', role: '' }),
+    projects: Array(2).fill({ name: '', description: '' }),
+    infrastructure: '',
+    clients: Array(8).fill('')
   });
 
   // Initialize with one page
@@ -55,6 +203,44 @@ const App: React.FC = () => {
   };
 
   // --- ACTIONS ---
+
+  const switchLanguage = (newLang: Language) => {
+    if (newLang === language) return;
+
+    const oldDict = DICTIONARY[language];
+    const newDict = DICTIONARY[newLang];
+    
+    // Create a translation map for simple replacements
+    const translationMap: Record<string, string> = {};
+    
+    // Map all values from old dictionary to new dictionary
+    Object.keys(oldDict).forEach(key => {
+        // @ts-ignore
+        const oldText = oldDict[key];
+        // @ts-ignore
+        const newText = newDict[key];
+        if (typeof oldText === 'string' && typeof newText === 'string' && oldText !== newText) {
+            translationMap[oldText] = newText;
+        }
+    });
+
+    // Update all elements on all pages
+    setCanvasState(prev => ({
+        ...prev,
+        pages: prev.pages.map(page => ({
+            ...page,
+            elements: page.elements.map(el => {
+                if (el.type === ElementType.TEXT && translationMap[el.content]) {
+                    // Perfect match replacement
+                    return { ...el, content: translationMap[el.content] };
+                }
+                return el;
+            })
+        }))
+    }));
+
+    setLanguage(newLang);
+  };
 
   const addElement = (type: ElementType, content: string = '') => {
     const newElement: CanvasElement = {
@@ -151,13 +337,42 @@ const App: React.FC = () => {
 
   // --- AUTO GENERATE DESIGN FROM DATA ---
   const generateAutoDesign = (layoutType: AutoLayoutType) => {
+    // Get translations based on current language
+    const t = DICTIONARY[language];
+
     const { name, tagline, about, vision, mission, contact } = companyData;
     const safeName = name || 'NAMA PERUSAHAAN';
     const safeTagline = tagline || 'Solusi Terpercaya untuk Masa Depan';
-    const safeAbout = about || 'Perusahaan kami berdedikasi untuk memberikan solusi terbaik di industri. Dengan pengalaman bertahun-tahun dan tim ahli, kami menghadirkan keunggulan dalam setiap layanan.';
-    const safeVision = vision || 'Menjadi pemimpin global dalam memberikan solusi inovatif yang memberdayakan bisnis dan masyarakat.';
-    const safeMission = mission || 'Memberikan produk dan layanan berkualitas tinggi yang melebihi ekspektasi pelanggan melalui perbaikan berkelanjutan.';
+    const safeAbout = about || t.default_about;
+    const safeVision = vision || t.default_vision;
+    const safeMission = mission || t.default_mission;
     const safeContact = contact || 'Gedung Cyber, Jl. Kuningan Barat No.8 | info@perusahaan.co.id | www.perusahaan.co.id';
+    const safeInfra = companyData.infrastructure || t.infra_facility_desc;
+
+    // Data helpers
+    const getVal = (idx: number, def: string) => companyData.values?.[idx] || def;
+    const getSvc = (idx: number, defT: string, defD: string) => ({
+        title: companyData.services?.[idx]?.title || defT,
+        desc: companyData.services?.[idx]?.description || defD
+    });
+    const getAdv = (idx: number, defT: string, defD: string) => ({
+        title: companyData.advantages?.[idx]?.title || defT,
+        desc: companyData.advantages?.[idx]?.description || defD
+    });
+    const getHist = (idx: number, defY: string, defE: string) => ({
+        year: companyData.history?.[idx]?.year || defY,
+        event: companyData.history?.[idx]?.event || defE
+    });
+    const getLegal = (idx: number, def: string) => companyData.legalities?.[idx] || def;
+    const getTeam = (idx: number, defN: string, defR: string) => ({
+        name: companyData.teamMembers?.[idx]?.name || defN,
+        role: companyData.teamMembers?.[idx]?.role || defR
+    });
+    const getProj = (idx: number, defN: string, defD: string) => ({
+        name: companyData.projects?.[idx]?.name || defN,
+        desc: companyData.projects?.[idx]?.description || defD
+    });
+    const getClient = (idx: number, def: string) => companyData.clients?.[idx] || def;
 
     // SPECIAL CASE: MULTI-PAGE GENERATION
     if (layoutType === AutoLayoutType.MULTI_PAGE_CORPORATE) {
@@ -227,214 +442,233 @@ const App: React.FC = () => {
 
         // 1. Cover (Cover)
         addPage(THEME.colors.primaryDark, [
-             // Background Geometric Accents
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 1123, backgroundColor: THEME.colors.primaryDark, zIndex: 0 },
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 400, y: 0, width: 394, height: 1123, backgroundColor: '#1e293b', zIndex: 0 },
-             
-             // Accent Lines
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 400, width: 694, height: 2, backgroundColor: THEME.colors.accent, zIndex: 1 },
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 390, width: 100, height: 4, backgroundColor: THEME.colors.accentPop, zIndex: 2 },
-
-             // Branding
-             { id: generateId(), type: ElementType.TEXT, content: "COMPANY PROFILE", x: 50, y: 350, width: 300, height: 40, fontSize: 18, fontWeight: 'bold', color: THEME.colors.accent, zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: t.title_cover, x: 50, y: 350, width: 300, height: 40, fontSize: 18, fontWeight: 'bold', color: THEME.colors.accent, zIndex: 2 },
              { id: generateId(), type: ElementType.TEXT, content: safeName, x: 50, y: 430, width: 694, height: 100, fontSize: 52, fontWeight: 'bold', color: '#ffffff', textAlign: 'left', zIndex: 2 },
              { id: generateId(), type: ElementType.TEXT, content: safeTagline, x: 50, y: 550, width: 500, height: 60, fontSize: 20, color: '#94a3b8', zIndex: 2 },
-             
-             // Year
              { id: generateId(), type: ElementType.TEXT, content: new Date().getFullYear().toString(), x: 50, y: 1000, width: 694, height: 50, fontSize: 16, color: '#64748b', textAlign: 'left', zIndex: 2 },
         ]);
 
         // 2. Kata Pengantar / Sambutan Direktur
         addPage(THEME.colors.bgWhite, [
-             ...createCommonElements("KATA PENGANTAR", 2),
+             ...createCommonElements(t.title_foreword, 2),
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 250, height: 300, backgroundColor: '#e2e8f0', borderRadius: 2, zIndex: 1 }, // Photo Placeholder
-             { id: generateId(), type: ElementType.TEXT, content: "SAMBUTAN DIREKTUR UTAMA", x: 330, y: 160, width: 400, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: `"Kami berkomitmen untuk memberikan solusi terbaik bagi klien kami. Perjalanan kami adalah inovasi dan dedikasi. Kami percaya pada pertumbuhan berkelanjutan dan kemitraan jangka panjang."\n\nTerima kasih telah mempercayai kami.`, x: 330, y: 210, width: 414, height: 200, ...THEME.fonts.body, fontSize: 14, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Nama Direktur", x: 330, y: 450, width: 200, height: 30, fontSize: 16, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Direktur Utama", x: 330, y: 475, width: 200, height: 20, ...THEME.fonts.caption, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: t.title_director_speech, x: 330, y: 160, width: 400, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: companyData.directorMessage || t.ph_director_quote, x: 330, y: 210, width: 414, height: 200, ...THEME.fonts.body, fontSize: 14, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: companyData.directorName || "Nama Direktur", x: 330, y: 450, width: 200, height: 30, fontSize: 16, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: companyData.directorRole || t.ph_team_role_1, x: 330, y: 475, width: 200, height: 20, ...THEME.fonts.caption, zIndex: 1 },
         ]);
 
         // 3. Profil Singkat Perusahaan
         addPage(THEME.colors.bgAlt, [
-             ...createCommonElements("TENTANG KAMI", 3),
-             { id: generateId(), type: ElementType.TEXT, content: "SIAPA KAMI", x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             ...createCommonElements(t.title_about, 3),
+             { id: generateId(), type: ElementType.TEXT, content: t.title_who, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
              { id: generateId(), type: ElementType.TEXT, content: safeAbout, x: 50, y: 200, width: 694, height: 200, ...THEME.fonts.body, zIndex: 1 },
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 450, width: 694, height: 400, backgroundColor: '#cbd5e1', borderRadius: 0, zIndex: 1 }, // Image placeholder
         ]);
 
         // 4. Sejarah Perusahaan
+        const h1 = getHist(0, '2003', t.ph_history_1);
+        const h2 = getHist(1, '2010', t.ph_history_2);
+        const h3 = getHist(2, '2024', t.ph_history_3);
+
         addPage(THEME.colors.bgWhite, [
-             ...createCommonElements("SEJARAH PERUSAHAAN", 4),
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 98, y: 160, width: 4, height: 700, backgroundColor: THEME.colors.line, zIndex: 0 }, // Timeline Bar
+             ...createCommonElements(t.title_history, 4),
+             { id: generateId(), type: ElementType.SHAPE, content: '', x: 98, y: 160, width: 4, height: 700, backgroundColor: THEME.colors.line, zIndex: 0 },
              
-             // Item 1
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: 180, width: 20, height: 20, backgroundColor: THEME.colors.accent, borderRadius: 10, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "2003", x: 130, y: 175, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.accent, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Pendirian Perusahaan. Dimulai dengan 5 karyawan.", x: 130, y: 210, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: h1.year, x: 130, y: 175, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.accent, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: h1.event, x: 130, y: 210, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
 
-             // Item 2
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: 380, width: 20, height: 20, backgroundColor: THEME.colors.primary, borderRadius: 10, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "2010", x: 130, y: 375, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Ekspansi Nasional. Membuka 3 kantor cabang baru.", x: 130, y: 410, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: h2.year, x: 130, y: 375, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: h2.event, x: 130, y: 410, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
 
-             // Item 3
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: 580, width: 20, height: 20, backgroundColor: THEME.colors.accentPop, borderRadius: 10, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "2024", x: 130, y: 575, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.accentPop, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Kemitraan Global tercapai dengan berbagai vendor internasional.", x: 130, y: 610, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: h3.year, x: 130, y: 575, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: THEME.colors.accentPop, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: h3.event, x: 130, y: 610, width: 500, height: 50, ...THEME.fonts.body, zIndex: 1 },
         ]);
 
         // 5. Legalitas & Sertifikasi
-        addPage(THEME.colors.bgAlt, [
-             ...createCommonElements("LEGALITAS & SERTIFIKASI", 5),
-             { id: generateId(), type: ElementType.TEXT, content: "Kepatuhan & Standarisasi", x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Kami mematuhi standar dan peraturan internasional untuk memastikan kualitas tertinggi dalam setiap layanan.", x: 50, y: 200, width: 600, height: 40, ...THEME.fonts.body, zIndex: 1 },
+        const l1 = getLegal(0, "Surat Izin Usaha");
+        const l2 = getLegal(1, "ISO 9001:2015");
+        const l3 = getLegal(2, "Certification");
 
-             // Cards - White on Alt BG
+        addPage(THEME.colors.bgAlt, [
+             ...createCommonElements(t.title_legality, 5),
+             { id: generateId(), type: ElementType.TEXT, content: t.title_compliance, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: t.ph_legality_desc, x: 50, y: 200, width: 600, height: 40, ...THEME.fonts.body, zIndex: 1 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Surat Izin Usaha", x: 75, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: l1, x: 75, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
              
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 297, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "ISO 9001:2015", x: 322, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: l2, x: 322, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
 
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 544, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Sertifikasi Industri", x: 569, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: l3, x: 569, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
         ]);
 
         // 6. Visi & Misi
         addPage(THEME.colors.bgWhite, [
-             ...createCommonElements("ARAH STRATEGIS", 6),
-             
-             // Vision Section
+             ...createCommonElements(t.title_strategy, 6),
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 694, height: 220, backgroundColor: THEME.colors.accentLight, borderRadius: 4, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: "VISI KAMI", x: 80, y: 190, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: t.title_vision, x: 80, y: 190, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
              { id: generateId(), type: ElementType.TEXT, content: safeVision, x: 80, y: 230, width: 634, height: 120, ...THEME.fonts.body, fontSize: 16, zIndex: 1 },
 
-             // Mission Section
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 400, width: 694, height: 220, backgroundColor: THEME.colors.bgAlt, borderRadius: 4, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: "MISI KAMI", x: 80, y: 430, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: t.title_mission, x: 80, y: 430, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
              { id: generateId(), type: ElementType.TEXT, content: safeMission, x: 80, y: 470, width: 634, height: 120, ...THEME.fonts.body, fontSize: 16, zIndex: 1 },
         ]);
 
         // 7. Nilai Perusahaan
+        const v1 = getVal(0, t.val_integrity);
+        const v2 = getVal(1, t.val_innovation);
+        const v3 = getVal(2, t.val_excellence);
+        const v4 = getVal(3, t.val_collab);
+
         addPage(THEME.colors.bgAlt, [
-             ...createCommonElements("NILAI PERUSAHAAN", 7),
-             
-             // Grid Layout 2x2 - Consistent Colors
+             ...createCommonElements(t.title_values, 7),
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 330, height: 180, backgroundColor: THEME.colors.primary, borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "INTEGRITAS", x: 70, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: v1, x: 70, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
 
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 160, width: 330, height: 180, backgroundColor: THEME.colors.accent, borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "INOVASI", x: 434, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: v2, x: 434, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
 
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 360, width: 330, height: 180, backgroundColor: '#475569', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "KEUNGGULAN", x: 70, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: v3, x: 70, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
 
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 360, width: 330, height: 180, backgroundColor: '#94a3b8', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "KERJASAMA", x: 434, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+             { id: generateId(), type: ElementType.TEXT, content: v4, x: 434, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
         ]);
 
         // 8. Layanan Utama
+        const s1 = getSvc(0, "01. Service Name", t.ph_service_desc);
+        const s2 = getSvc(1, "02. Service Name", t.ph_service_desc);
+        const s3 = getSvc(2, "03. Service Name", t.ph_service_desc);
+
         addPage(THEME.colors.bgWhite, [
-             ...createCommonElements("LAYANAN UTAMA", 8),
-             
-             // Service 1
+             ...createCommonElements(t.title_services, 8),
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: "01. Nama Layanan", x: 50, y: 180, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Deskripsi lengkap mengenai layanan pertama. Kami menyediakan solusi berkualitas tinggi yang disesuaikan dengan kebutuhan Anda.", x: 50, y: 220, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: s1.title, x: 50, y: 180, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: s1.desc, x: 50, y: 220, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
 
-             // Service 2
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 300, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: "02. Nama Layanan", x: 50, y: 320, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Deskripsi lengkap mengenai layanan kedua. Handal, cepat, dan aman.", x: 50, y: 360, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: s2.title, x: 50, y: 320, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: s2.desc, x: 50, y: 360, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
 
-             // Service 3
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 440, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: "03. Nama Layanan", x: 50, y: 460, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Deskripsi lengkap mengenai layanan ketiga. Teknologi canggih untuk bisnis modern.", x: 50, y: 500, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: s3.title, x: 50, y: 460, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: s3.desc, x: 50, y: 500, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 },
         ]);
 
         // 9. Keunggulan Perusahaan
+        const a1 = getAdv(0, t.adv_1_title, t.adv_1_desc);
+        const a2 = getAdv(1, t.adv_2_title, t.adv_2_desc);
+        const a3 = getAdv(2, t.adv_3_title, t.adv_3_desc);
+        const a4 = getAdv(3, t.adv_4_title, t.adv_4_desc);
+
         addPage(THEME.colors.bgAlt, [
-             ...createCommonElements("KEUNGGULAN KAMI", 9),
-             
-             { id: generateId(), type: ElementType.TEXT, content: "Tim Profesional", x: 50, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Ahli bersertifikasi dengan pengalaman bertahun-tahun.", x: 50, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+             ...createCommonElements(t.title_advantages, 9),
+             { id: generateId(), type: ElementType.TEXT, content: a1.title, x: 50, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: a1.desc, x: 50, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
 
-             { id: generateId(), type: ElementType.TEXT, content: "Layanan 24/7", x: 400, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Selalu tersedia untuk membantu Anda kapan saja.", x: 400, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: a2.title, x: 400, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: a2.desc, x: 400, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
 
-             { id: generateId(), type: ElementType.TEXT, content: "Teknologi Terkini", x: 50, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Menggunakan perangkat dan teknologi paling mutakhir.", x: 50, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: a3.title, x: 50, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: a3.desc, x: 50, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
 
-             { id: generateId(), type: ElementType.TEXT, content: "Harga Kompetitif", x: 400, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Nilai terbaik untuk investasi bisnis Anda.", x: 400, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: a4.title, x: 400, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: a4.desc, x: 400, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
         ]);
 
         // 10. Infrastruktur / Teknologi
         addPage(THEME.colors.bgWhite, [
-             ...createCommonElements("INFRASTRUKTUR & TEKNOLOGI", 10),
-             { id: generateId(), type: ElementType.TEXT, content: "Fasilitas Kami", x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Dibangun untuk mendukung operasional mission-critical dengan sistem redundansi penuh.", x: 50, y: 200, width: 600, height: 40, ...THEME.fonts.body, zIndex: 1 },
+             ...createCommonElements(t.title_infra, 10),
+             { id: generateId(), type: ElementType.TEXT, content: t.infra_facility_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: safeInfra, x: 50, y: 200, width: 600, height: 40, ...THEME.fonts.body, zIndex: 1 },
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 250, width: 694, height: 400, backgroundColor: '#cbd5e1', borderRadius: 0, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Foto Data Center / Infrastruktur", x: 50, y: 660, width: 300, height: 20, ...THEME.fonts.caption, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: "Photo Data Center / Infrastructure", x: 50, y: 660, width: 300, height: 20, ...THEME.fonts.caption, zIndex: 1 },
         ]);
 
         // 11. Klien & Partner
         addPage(THEME.colors.bgAlt, [
-             ...createCommonElements("KLIEN & PARTNER", 11),
-             { id: generateId(), type: ElementType.TEXT, content: "Partner Terpercaya", x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             ...createCommonElements(t.title_clients, 11),
+             { id: generateId(), type: ElementType.TEXT, content: t.client_trusted_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
              
              // Client Logo Grid
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(0, "CLIENT 1"), x: 50, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 231, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(1, "CLIENT 2"), x: 231, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 412, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(2, "CLIENT 3"), x: 412, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 593, y: 220, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(3, "CLIENT 4"), x: 593, y: 250, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
 
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(4, "CLIENT 5"), x: 50, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 231, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(5, "CLIENT 6"), x: 231, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 412, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(6, "CLIENT 7"), x: 412, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 593, y: 320, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: getClient(7, "CLIENT 8"), x: 593, y: 350, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 },
         ]);
 
         // 12. Portofolio Proyek
-        addPage(THEME.colors.bgWhite, [
-             ...createCommonElements("PORTOFOLIO PROYEK", 12),
-             
-             // Project 1
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 330, height: 200, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Nama Proyek A", x: 50, y: 370, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Deskripsi proyek A. Implementasi berhasil dilakukan tepat waktu.", x: 50, y: 400, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 },
+        const p1 = getProj(0, "Project Name A", "Description of project A.");
+        const p2 = getProj(1, "Project Name B", "Description of project B.");
 
-             // Project 2
+        addPage(THEME.colors.bgWhite, [
+             ...createCommonElements(t.title_portfolio, 12),
+             
+             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 330, height: 200, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: p1.name, x: 50, y: 370, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: p1.desc, x: 50, y: 400, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 },
+
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 160, width: 330, height: 200, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Nama Proyek B", x: 414, y: 370, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Deskripsi proyek B. Kepuasan klien tercapai dengan hasil maksimal.", x: 414, y: 400, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: p2.name, x: 414, y: 370, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: p2.desc, x: 414, y: 400, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 },
         ]);
 
         // 13. Tim Manajemen
+        const tm1 = getTeam(0, "Full Name", t.ph_team_role_1);
+        const tm2 = getTeam(1, "Full Name", t.ph_team_role_2);
+
         addPage(THEME.colors.bgAlt, [
-             ...createCommonElements("TIM MANAJEMEN", 13),
+             ...createCommonElements(t.title_team, 13),
              
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 150, y: 200, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Nama Lengkap", x: 125, y: 360, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Direktur Utama", x: 125, y: 390, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: tm1.name, x: 125, y: 360, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: tm1.role, x: 125, y: 390, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 },
 
              { id: generateId(), type: ElementType.SHAPE, content: '', x: 500, y: 200, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Nama Lengkap", x: 475, y: 360, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Direktur Operasional", x: 475, y: 390, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: tm2.name, x: 475, y: 360, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
+             { id: generateId(), type: ElementType.TEXT, content: tm2.role, x: 475, y: 390, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 },
         ]);
 
         // 14. Kontak & Lokasi (Back Cover)
         addPage(THEME.colors.primaryDark, [
             { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 1123, backgroundColor: THEME.colors.primaryDark, zIndex: 0 },
             
-            { id: generateId(), type: ElementType.TEXT, content: "HUBUNGI KAMI", x: 50, y: 100, width: 694, height: 60, fontSize: 48, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 1 },
+            { id: generateId(), type: ElementType.TEXT, content: t.title_contact, x: 50, y: 100, width: 694, height: 60, fontSize: 48, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 1 },
             { id: generateId(), type: ElementType.SHAPE, content: '', x: 347, y: 180, width: 100, height: 4, backgroundColor: THEME.colors.accent, zIndex: 1 },
             
             { id: generateId(), type: ElementType.TEXT, content: safeContact, x: 100, y: 250, width: 594, height: 200, fontSize: 18, color: '#e2e8f0', textAlign: 'center', zIndex: 1 },
             
             { id: generateId(), type: ElementType.SHAPE, content: '', x: 100, y: 500, width: 594, height: 400, backgroundColor: '#1e293b', zIndex: 1 }, // Map Placeholder
-            { id: generateId(), type: ElementType.TEXT, content: "Peta Lokasi Kantor", x: 100, y: 700, width: 594, height: 30, fontSize: 14, color: '#64748b', textAlign: 'center', zIndex: 2 },
+            { id: generateId(), type: ElementType.TEXT, content: t.ph_contact_map, x: 100, y: 700, width: 594, height: 30, fontSize: 14, color: '#64748b', textAlign: 'center', zIndex: 2 },
             
             { id: generateId(), type: ElementType.TEXT, content: "www.perusahaan.co.id", x: 50, y: 1000, width: 694, height: 30, fontSize: 16, color: '#64748b', textAlign: 'center', zIndex: 1 },
         ]);
@@ -459,15 +693,15 @@ const App: React.FC = () => {
       elements.push({ id: generateId(), type: ElementType.TEXT, content: "CONTACT", x: 25, y: 950, width: 200, height: 30, fontSize: 12, fontWeight: 'bold', color: '#64748b', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeContact, x: 25, y: 970, width: 200, height: 100, fontSize: 12, color: '#ffffff', zIndex: 1 });
 
-      elements.push({ id: generateId(), type: ElementType.TEXT, content: "About Us", x: 300, y: 60, width: 400, height: 40, fontSize: 36, fontWeight: 'bold', color: '#0f172a', zIndex: 1 });
+      elements.push({ id: generateId(), type: ElementType.TEXT, content: t.title_about, x: 300, y: 60, width: 400, height: 40, fontSize: 36, fontWeight: 'bold', color: '#0f172a', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.SHAPE, content: '', x: 300, y: 110, width: 60, height: 6, backgroundColor: '#3b82f6', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeAbout, x: 300, y: 140, width: 440, height: 200, fontSize: 14, color: '#334155', zIndex: 1 });
 
       elements.push({ id: generateId(), type: ElementType.SHAPE, content: '', x: 300, y: 400, width: 440, height: 250, backgroundColor: '#f8fafc', borderRadius: 10, zIndex: 0 });
-      elements.push({ id: generateId(), type: ElementType.TEXT, content: "Our Vision", x: 320, y: 420, width: 400, height: 30, fontSize: 20, fontWeight: 'bold', color: '#0f172a', zIndex: 1 });
+      elements.push({ id: generateId(), type: ElementType.TEXT, content: t.title_vision, x: 320, y: 420, width: 400, height: 30, fontSize: 20, fontWeight: 'bold', color: '#0f172a', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeVision, x: 320, y: 460, width: 400, height: 150, fontSize: 14, color: '#475569', zIndex: 1 });
 
-      elements.push({ id: generateId(), type: ElementType.TEXT, content: "Our Mission", x: 320, y: 680, width: 400, height: 30, fontSize: 20, fontWeight: 'bold', color: '#0f172a', zIndex: 1 });
+      elements.push({ id: generateId(), type: ElementType.TEXT, content: t.title_mission, x: 320, y: 680, width: 400, height: 30, fontSize: 20, fontWeight: 'bold', color: '#0f172a', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeMission, x: 320, y: 720, width: 440, height: 150, fontSize: 14, color: '#475569', zIndex: 1 });
     
     } else if (layoutType === AutoLayoutType.CLASSIC_HEADER) {
@@ -476,7 +710,7 @@ const App: React.FC = () => {
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeName, x: 50, y: 60, width: 694, height: 60, fontSize: 40, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeTagline, x: 150, y: 120, width: 494, height: 40, fontSize: 16, color: '#bfdbfe', textAlign: 'center', zIndex: 1 });
 
-      elements.push({ id: generateId(), type: ElementType.TEXT, content: "COMPANY PROFILE", x: 50, y: 250, width: 694, height: 30, fontSize: 14, fontWeight: 'bold', color: '#94a3b8', textAlign: 'center', zIndex: 1 });
+      elements.push({ id: generateId(), type: ElementType.TEXT, content: t.title_cover, x: 50, y: 250, width: 694, height: 30, fontSize: 14, fontWeight: 'bold', color: '#94a3b8', textAlign: 'center', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeAbout, x: 100, y: 300, width: 594, height: 150, fontSize: 14, color: '#334155', textAlign: 'center', zIndex: 1 });
 
       elements.push({ id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 500, width: 330, height: 300, backgroundColor: '#eff6ff', borderRadius: 8, zIndex: 0 });
@@ -495,7 +729,7 @@ const App: React.FC = () => {
       elements.push({ id: generateId(), type: ElementType.SHAPE, content: '', x: -100, y: -50, width: 600, height: 600, backgroundColor: '#ea580c', borderRadius: 300, zIndex: 0 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeName, x: 50, y: 150, width: 500, height: 100, fontSize: 56, fontWeight: 'bold', color: '#ffffff', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 300, width: 694, height: 2, backgroundColor: '#4b5563', zIndex: 1 });
-      elements.push({ id: generateId(), type: ElementType.TEXT, content: "WHO WE ARE", x: 50, y: 350, width: 200, height: 30, fontSize: 14, fontWeight: 'bold', color: '#ea580c', zIndex: 1 });
+      elements.push({ id: generateId(), type: ElementType.TEXT, content: t.title_who, x: 50, y: 350, width: 200, height: 30, fontSize: 14, fontWeight: 'bold', color: '#ea580c', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeAbout, x: 50, y: 390, width: 694, height: 120, fontSize: 16, color: '#d1d5db', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: "THE FUTURE", x: 50, y: 550, width: 200, height: 30, fontSize: 14, fontWeight: 'bold', color: '#ea580c', zIndex: 1 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeVision, x: 50, y: 590, width: 330, height: 200, fontSize: 14, color: '#d1d5db', zIndex: 1 });
@@ -648,6 +882,8 @@ const App: React.FC = () => {
         applyTemplate={applyTemplate}
         generateAutoDesign={generateAutoDesign}
         pages={canvasState.pages}
+        language={language}
+        setLanguage={switchLanguage}
       />
 
       {/* MAIN WORKSPACE */}
@@ -670,7 +906,7 @@ const App: React.FC = () => {
                   <ChevronLeft size={16} />
                 </button>
                 <div className="px-3 text-xs font-semibold text-gray-600">
-                  Page {activePageIndex + 1} / {canvasState.pages.length}
+                  {DICTIONARY[language].ui_page} {activePageIndex + 1} / {canvasState.pages.length}
                 </div>
                 <button 
                   onClick={() => navigatePage('next')}

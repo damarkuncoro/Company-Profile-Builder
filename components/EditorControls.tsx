@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { CanvasElement, ElementType, CompanyData, TemplateType, AutoLayoutType, Page } from '../types';
+import { CanvasElement, ElementType, CompanyData, TemplateType, AutoLayoutType, Page, Language } from '../types';
 import { generateCompanyContent } from '../services/geminiService';
 import { DraggableElement } from './DraggableElement';
+import { DICTIONARY } from '../App';
 import { 
   Type, Image as ImageIcon, Box, Layout, Sparkles, 
   AlignLeft, AlignCenter, AlignRight, Trash2, Download, Printer, Plus,
-  Layers, Hexagon, Database, Wand2, FileStack, XCircle
+  Layers, Hexagon, Database, Wand2, FileStack, XCircle, Globe, ChevronDown
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -23,6 +24,8 @@ interface EditorControlsProps {
   applyTemplate: (type: TemplateType) => void;
   generateAutoDesign: (type: AutoLayoutType) => void;
   pages: Page[];
+  language: Language;
+  setLanguage: (lang: Language) => void;
 }
 
 const CAKRAMEDIA_DATA: CompanyData = {
@@ -32,7 +35,67 @@ const CAKRAMEDIA_DATA: CompanyData = {
   about: "PT. Cakramedia Indocyber adalah perusahaan yang bergerak di bidang Information & Communication Technology (ICT) yang telah berdiri sejak tahun 2003. Sejak tahun 2006, Cakramedia resmi menjadi Internet Service Provider (ISP) dengan izin Dirjen Postel dan terdaftar sebagai anggota APJII.",
   vision: "Menjadi penyedia solusi teknologi informasi dan komunikasi terdepan di Indonesia yang mendukung transformasi digital bisnis secara berkelanjutan.",
   mission: "Memberikan layanan berkualitas tinggi dengan fokus pada kepuasan pelanggan. Menghadirkan solusi teknologi yang aman, stabil, dan efisien. Mengembangkan infrastruktur jaringan yang andal dan berkelanjutan.",
-  contact: "Gedung Cyber, Jakarta Selatan | info@cakramedia.co.id"
+  contact: "Gedung Cyber, Jakarta Selatan | info@cakramedia.co.id",
+  
+  // Leadership
+  directorName: "Budi Santoso",
+  directorRole: "Direktur Utama",
+  directorMessage: "Kami berkomitmen untuk memberikan layanan terbaik bagi seluruh mitra bisnis kami, dengan mengedepankan integritas dan inovasi teknologi.",
+  
+  // History
+  history: [
+    { year: "2003", event: "Pendirian Perusahaan sebagai System Integrator" },
+    { year: "2006", event: "Resmi mendapatkan izin ISP dari Dirjen Postel" },
+    { year: "2015", event: "Ekspansi jaringan Fiber Optic ke 5 Kota Besar" }
+  ],
+  legalities: ["Izin ISP No. 71/Dirjen/2006", "Anggota APJII", "Sertifikasi ISO 9001:2015"],
+  
+  // Strategy
+  values: ["Integritas", "Inovasi", "Keunggulan", "Kerjasama"],
+  
+  // Offerings
+  services: [
+    { title: "Dedicated Internet", description: "Koneksi internet dedicated dengan jaminan SLA 99.5% untuk bisnis." },
+    { title: "Cloud & Data Center", description: "Layanan colocation server dan cloud hosting yang aman." },
+    { title: "Managed Service", description: "Dukungan teknis IT profesional 24/7 untuk perusahaan." }
+  ],
+  advantages: [
+    { title: "Jaringan Stabil", description: "Infrastruktur fiber optic dengan redundansi tinggi." },
+    { title: "Support 24/7", description: "Tim teknis siap membantu kapanpun dibutuhkan." },
+    { title: "Harga Kompetitif", description: "Solusi hemat biaya tanpa mengurangi kualitas." },
+    { title: "Teknologi Terkini", description: "Selalu menggunakan perangkat terbaru." }
+  ],
+  
+  // Operations
+  infrastructure: "Kami memiliki Data Center Tier 3 dengan standar keamanan internasional, didukung oleh jaringan backbone fiber optic berkapasitas 100Gbps yang terhubung ke IIX dan IX internasional.",
+  clients: ["Bank Mandiri", "Tokopedia", "Pertamina", "Telkom Indonesia", "Shopee", "Kementerian BUMN", "Traveloka", "Gojek"],
+
+  // Proof
+  teamMembers: [
+    { name: "Budi Santoso", role: "CEO" },
+    { name: "Siti Aminah", role: "CTO" }
+  ],
+  projects: [
+    { name: "Smart City Project", description: "Implementasi jaringan IoT untuk kota pintar." },
+    { name: "Bank Nasional Network", description: "Penyediaan infrastruktur WAN untuk 50 cabang bank." }
+  ]
+};
+
+// Helper component for Accordion Sections
+const FormSection = ({ title, children, defaultOpen = false }: { title: string, children?: React.ReactNode, defaultOpen?: boolean }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+    return (
+        <div className="border border-gray-200 rounded-md bg-white overflow-hidden">
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 text-xs font-bold text-gray-700 hover:bg-gray-100"
+            >
+                {title}
+                <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isOpen && <div className="p-3 space-y-3 border-t border-gray-100">{children}</div>}
+        </div>
+    );
 };
 
 export const EditorControls: React.FC<EditorControlsProps> = ({
@@ -46,12 +109,16 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
   setBackgroundImage,
   applyTemplate,
   generateAutoDesign,
-  pages
+  pages,
+  language,
+  setLanguage
 }) => {
   const [activeTab, setActiveTab] = useState<'content' | 'design' | 'settings'>('content');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const exportContainerRef = useRef<HTMLDivElement>(null);
+  
+  const t = DICTIONARY[language]; // Current translation
 
   // Automatically switch to Design tab when an element is selected
   useEffect(() => {
@@ -186,27 +253,61 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
     }
   };
 
+  // Generic updater for array fields
+  const updateArrayItem = (field: keyof CompanyData, index: number, key: string | null, value: string) => {
+    setCompanyData(prev => {
+        const arr = [...(prev[field] as any[])];
+        if (!arr[index]) arr[index] = {};
+        if (key) {
+            arr[index] = { ...arr[index], [key]: value };
+        } else {
+            arr[index] = value;
+        }
+        return { ...prev, [field]: arr };
+    });
+  };
+
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden shadow-xl z-20 no-print">
+      
+      {/* LANGUAGE TOGGLE */}
+      <div className="flex justify-between items-center px-4 py-2 bg-gray-50 border-b border-gray-200">
+        <div className="text-xs font-bold text-gray-500">LANGUAGE</div>
+        <div className="flex bg-white rounded border border-gray-200 p-0.5">
+            <button 
+                onClick={() => setLanguage('id')}
+                className={`text-xs px-2 py-0.5 rounded ${language === 'id' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                🇮🇩 ID
+            </button>
+            <button 
+                onClick={() => setLanguage('en')}
+                className={`text-xs px-2 py-0.5 rounded ${language === 'en' ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+                🇺🇸 EN
+            </button>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button 
           onClick={() => setActiveTab('content')} 
           className={`flex-1 py-3 text-sm font-medium ${activeTab === 'content' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Data
+          {t.ui_data}
         </button>
         <button 
           onClick={() => setActiveTab('design')} 
           className={`flex-1 py-3 text-sm font-medium ${activeTab === 'design' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Design
+          {t.ui_design}
         </button>
         <button 
           onClick={() => setActiveTab('settings')} 
           className={`flex-1 py-3 text-sm font-medium ${activeTab === 'settings' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Export
+          {t.ui_export}
         </button>
       </div>
 
@@ -214,7 +315,7 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
         
         {/* DATA TAB */}
         {activeTab === 'content' && (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-20">
             <button 
                 onClick={() => setCompanyData(CAKRAMEDIA_DATA)}
                 className="w-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-xs py-2 rounded flex items-center justify-center gap-2 mb-2"
@@ -226,84 +327,159 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
               <h3 className="text-xs font-bold text-blue-800 uppercase mb-2 flex items-center gap-1">
                 <Sparkles size={12} /> AI Generator
               </h3>
-              <p className="text-xs text-blue-600 mb-3">
-                Fill Name & Industry, then click generate to autofill descriptions.
+              <p className="text-[10px] text-blue-600 mb-3">
+                Quick fill About, Vision & Mission using AI.
               </p>
               <button 
                 onClick={handleAIAutoFill}
                 disabled={isGenerating}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
-                {isGenerating ? 'Thinking...' : 'Generate Content'} <Sparkles size={14} />
+                {isGenerating ? 'Thinking...' : 'Generate Content'} <Sparkles size={12} />
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Company Name</label>
-                <input 
-                  type="text" 
-                  value={companyData.name}
-                  onChange={(e) => setCompanyData({...companyData, name: e.target.value})}
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                  placeholder="Acme Corp"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Tagline</label>
-                <input 
-                  type="text" 
-                  value={companyData.tagline}
-                  onChange={(e) => setCompanyData({...companyData, tagline: e.target.value})}
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                  placeholder="Innovating the future..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Industry</label>
-                <input 
-                  type="text" 
-                  value={companyData.industry}
-                  onChange={(e) => setCompanyData({...companyData, industry: e.target.value})}
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                  placeholder="Technology, Food, etc."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">About Us</label>
-                <textarea 
-                  value={companyData.about}
-                  onChange={(e) => setCompanyData({...companyData, about: e.target.value})}
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none h-20 resize-none"
-                  placeholder="Short description of your company..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Vision</label>
-                <textarea 
-                  value={companyData.vision}
-                  onChange={(e) => setCompanyData({...companyData, vision: e.target.value})}
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none h-20 resize-none"
-                />
-              </div>
-               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Mission</label>
-                <textarea 
-                  value={companyData.mission}
-                  onChange={(e) => setCompanyData({...companyData, mission: e.target.value})}
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none h-20 resize-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Contact Info</label>
-                <textarea 
-                  value={companyData.contact}
-                  onChange={(e) => setCompanyData({...companyData, contact: e.target.value})}
-                  className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none h-16 resize-none"
-                />
-              </div>
-              <div className="pt-2 border-t border-gray-100">
-                <p className="text-xs font-bold text-gray-500 mb-2">ADD TO CANVAS</p>
+            {/* SECTION 1: IDENTITY */}
+            <FormSection title="Company Identity" defaultOpen>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Company Name</label>
+                    <input type="text" value={companyData.name} onChange={(e) => setCompanyData({...companyData, name: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" placeholder="e.g. Acme Corp" />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Tagline</label>
+                    <input type="text" value={companyData.tagline} onChange={(e) => setCompanyData({...companyData, tagline: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Industry</label>
+                    <input type="text" value={companyData.industry} onChange={(e) => setCompanyData({...companyData, industry: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" />
+                </div>
+                 <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">About Us</label>
+                    <textarea value={companyData.about} onChange={(e) => setCompanyData({...companyData, about: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500 h-20" />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Contact Info</label>
+                    <textarea value={companyData.contact} onChange={(e) => setCompanyData({...companyData, contact: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500 h-16" placeholder="Address, Email, Phone..." />
+                </div>
+            </FormSection>
+
+            {/* SECTION 2: STRATEGY */}
+            <FormSection title="Vision, Mission & Values">
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Vision</label>
+                    <textarea value={companyData.vision} onChange={(e) => setCompanyData({...companyData, vision: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500 h-16" />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Mission</label>
+                    <textarea value={companyData.mission} onChange={(e) => setCompanyData({...companyData, mission: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500 h-16" />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Core Values (Max 4)</label>
+                    <div className="space-y-1">
+                        {[0, 1, 2, 3].map(i => (
+                             <input key={i} type="text" value={companyData.values?.[i] || ''} onChange={(e) => updateArrayItem('values', i, null, e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mb-1" placeholder={`Value ${i+1}`} />
+                        ))}
+                    </div>
+                </div>
+            </FormSection>
+
+            {/* SECTION 3: LEADERSHIP */}
+            <FormSection title="Director & Team">
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Director Name</label>
+                    <input type="text" value={companyData.directorName} onChange={(e) => setCompanyData({...companyData, directorName: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Role / Title</label>
+                    <input type="text" value={companyData.directorRole} onChange={(e) => setCompanyData({...companyData, directorRole: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500" />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Welcome Message</label>
+                    <textarea value={companyData.directorMessage} onChange={(e) => setCompanyData({...companyData, directorMessage: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500 h-20" />
+                </div>
+                <div className="pt-2 border-t border-gray-100 mt-2">
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Key Team Members</label>
+                    {[0, 1].map(i => (
+                        <div key={i} className="flex gap-1 mb-1">
+                            <input type="text" value={companyData.teamMembers?.[i]?.name || ''} onChange={(e) => updateArrayItem('teamMembers', i, 'name', e.target.value)} className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs" placeholder="Name" />
+                            <input type="text" value={companyData.teamMembers?.[i]?.role || ''} onChange={(e) => updateArrayItem('teamMembers', i, 'role', e.target.value)} className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs" placeholder="Role" />
+                        </div>
+                    ))}
+                </div>
+            </FormSection>
+
+            {/* SECTION 4: HISTORY & LEGALITY */}
+            <FormSection title="History & Legality">
+                 <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Timeline Events</label>
+                    {[0, 1, 2].map(i => (
+                        <div key={i} className="flex gap-1 mb-1">
+                            <input type="text" value={companyData.history?.[i]?.year || ''} onChange={(e) => updateArrayItem('history', i, 'year', e.target.value)} className="w-16 border border-gray-300 rounded px-2 py-1 text-xs" placeholder="Year" />
+                            <input type="text" value={companyData.history?.[i]?.event || ''} onChange={(e) => updateArrayItem('history', i, 'event', e.target.value)} className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs" placeholder="Event Description" />
+                        </div>
+                    ))}
+                </div>
+                <div className="pt-2 mt-2">
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Legality / Certs</label>
+                    {[0, 1, 2].map(i => (
+                         <input key={i} type="text" value={companyData.legalities?.[i] || ''} onChange={(e) => updateArrayItem('legalities', i, null, e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mb-1" placeholder={`Certificate ${i+1}`} />
+                    ))}
+                </div>
+            </FormSection>
+
+            {/* SECTION 5: SERVICES & ADVANTAGES */}
+            <FormSection title="Services & Advantages">
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Key Services</label>
+                    {[0, 1, 2].map(i => (
+                        <div key={i} className="mb-2 bg-gray-50 p-2 rounded border border-gray-100">
+                             <input type="text" value={companyData.services?.[i]?.title || ''} onChange={(e) => updateArrayItem('services', i, 'title', e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mb-1 font-bold" placeholder={`Service Title ${i+1}`} />
+                             <textarea value={companyData.services?.[i]?.description || ''} onChange={(e) => updateArrayItem('services', i, 'description', e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs h-10 resize-none" placeholder="Description" />
+                        </div>
+                    ))}
+                </div>
+                <div>
+                     <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Advantages</label>
+                     {[0, 1, 2, 3].map(i => (
+                         <div key={i} className="mb-1">
+                             <input type="text" value={companyData.advantages?.[i]?.title || ''} onChange={(e) => updateArrayItem('advantages', i, 'title', e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold" placeholder={`Advantage ${i+1}`} />
+                             <input type="text" value={companyData.advantages?.[i]?.description || ''} onChange={(e) => updateArrayItem('advantages', i, 'description', e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-[10px]" placeholder="Short description" />
+                         </div>
+                     ))}
+                </div>
+            </FormSection>
+
+            {/* SECTION 6: OPERATIONS (NEW) */}
+            <FormSection title="Infrastructure & Clients">
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Infrastructure Description</label>
+                    <textarea value={companyData.infrastructure} onChange={(e) => setCompanyData({...companyData, infrastructure: e.target.value})} className="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:border-blue-500 h-16" placeholder="Describe your facilities, technology stack, etc." />
+                </div>
+                <div className="pt-2 mt-2">
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Key Clients</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+                             <input key={i} type="text" value={companyData.clients?.[i] || ''} onChange={(e) => updateArrayItem('clients', i, null, e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs" placeholder={`Client ${i+1}`} />
+                        ))}
+                    </div>
+                </div>
+            </FormSection>
+
+            {/* SECTION 7: PROJECTS */}
+            <FormSection title="Portfolio">
+                 <div>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Key Projects</label>
+                    {[0, 1].map(i => (
+                        <div key={i} className="mb-2 bg-gray-50 p-2 rounded border border-gray-100">
+                             <input type="text" value={companyData.projects?.[i]?.name || ''} onChange={(e) => updateArrayItem('projects', i, 'name', e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs mb-1 font-bold" placeholder={`Project Name ${i+1}`} />
+                             <textarea value={companyData.projects?.[i]?.description || ''} onChange={(e) => updateArrayItem('projects', i, 'description', e.target.value)} className="w-full border border-gray-300 rounded px-2 py-1 text-xs h-10 resize-none" placeholder="Description" />
+                        </div>
+                    ))}
+                </div>
+            </FormSection>
+
+            <div className="pt-2 border-t border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">QUICK INSERT</p>
                 <div className="grid grid-cols-2 gap-2">
                     <button onClick={() => addElement(ElementType.TEXT, companyData.name || "Company Name")} className="flex items-center gap-2 text-xs bg-gray-100 hover:bg-gray-200 p-2 rounded text-gray-700">
                         <Type size={14} /> Name
@@ -319,7 +495,6 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                     </button>
                 </div>
               </div>
-            </div>
           </div>
         )}
 
