@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { CanvasElement, ElementType, CompanyData, TemplateType, AutoLayoutType } from '../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { CanvasElement, ElementType, CompanyData, TemplateType, AutoLayoutType, Page } from '../types';
 import { generateCompanyContent } from '../services/geminiService';
+import { DraggableElement } from './DraggableElement';
 import { 
   Type, Image as ImageIcon, Box, Layout, Sparkles, 
   AlignLeft, AlignCenter, AlignRight, Trash2, Download, Printer, Plus,
-  Layers, Hexagon, Database, Wand2
+  Layers, Hexagon, Database, Wand2, FileStack, XCircle
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -20,6 +22,7 @@ interface EditorControlsProps {
   setBackgroundImage: (url: string) => void;
   applyTemplate: (type: TemplateType) => void;
   generateAutoDesign: (type: AutoLayoutType) => void;
+  pages: Page[];
 }
 
 const CAKRAMEDIA_DATA: CompanyData = {
@@ -42,10 +45,20 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
   setBackgroundColor,
   setBackgroundImage,
   applyTemplate,
-  generateAutoDesign
+  generateAutoDesign,
+  pages
 }) => {
   const [activeTab, setActiveTab] = useState<'content' | 'design' | 'settings'>('content');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportContainerRef = useRef<HTMLDivElement>(null);
+
+  // Automatically switch to Design tab when an element is selected
+  useEffect(() => {
+    if (selectedElement) {
+      setActiveTab('design');
+    }
+  }, [selectedElement]);
 
   const handleAIAutoFill = async () => {
     if (!companyData.name || !companyData.industry) {
@@ -81,7 +94,9 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
             scale: 2, // Higher quality
             useCORS: true,
             logging: false,
-            backgroundColor: null
+            backgroundColor: null,
+            scrollX: 0,
+            scrollY: 0
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -96,6 +111,59 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
         alert("Could not export PDF.");
     } finally {
         input.style.transform = originalTransform;
+    }
+  };
+
+  const handleExportAll = async () => {
+    setIsExporting(true);
+    // Increased delay to ensure images load and portal renders correctly
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    if (!exportContainerRef.current) {
+        setIsExporting(false);
+        return;
+    }
+
+    try {
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        const pageNodes = Array.from(exportContainerRef.current.children);
+
+        for (let i = 0; i < pageNodes.length; i++) {
+            const pageNode = pageNodes[i] as HTMLElement;
+            
+            // Capture the page
+            const canvas = await html2canvas(pageNode, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: null,
+                scrollX: 0,
+                scrollY: 0,
+                onclone: (documentClone) => {
+                   // Ensure fonts are visible if problematic
+                   const el = documentClone.getElementById(pageNode.id);
+                   if (el) el.style.visibility = 'visible';
+                }
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+
+            if (i > 0) {
+                pdf.addPage();
+            }
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        }
+
+        pdf.save(`${companyData.name.replace(/\s+/g, '_') || 'Company'}_FullProfile.pdf`);
+
+    } catch (error) {
+        console.error("Full export failed:", error);
+        alert("Failed to export all pages.");
+    } finally {
+        setIsExporting(false);
     }
   };
 
@@ -259,59 +327,14 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
         {activeTab === 'design' && (
           <div className="space-y-6">
             
-            {/* Auto Design Section */}
-            <div className="bg-gradient-to-r from-violet-50 to-indigo-50 p-3 rounded-lg border border-violet-100">
-                <h3 className="text-xs font-bold text-violet-800 uppercase mb-2 flex items-center gap-1">
-                    <Wand2 size={12} /> Auto-Generate Design
-                </h3>
-                <p className="text-[10px] text-violet-600 mb-2">
-                    Automatically create a layout using your entered data.
-                </p>
-                <div className="space-y-2">
-                    <button onClick={() => generateAutoDesign(AutoLayoutType.MULTI_PAGE_CORPORATE)} className="w-full flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700 p-2 rounded text-xs transition-colors shadow-sm">
-                        <Layers size={14} /> Full Profile (14 Pages)
-                    </button>
-                    <div className="flex gap-2">
-                        <button onClick={() => generateAutoDesign(AutoLayoutType.MODERN_SIDEBAR)} className="flex-1 flex items-center justify-center gap-1 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors">
-                            <Layout size={14} /> Sidebar
-                        </button>
-                        <button onClick={() => generateAutoDesign(AutoLayoutType.CLASSIC_HEADER)} className="flex-1 flex items-center justify-center gap-1 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors">
-                            <Layout size={14} /> Classic
-                        </button>
-                    </div>
-                    <button onClick={() => generateAutoDesign(AutoLayoutType.BOLD_GEOMETRIC)} className="w-full flex items-center justify-center gap-2 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors">
-                        <Layout size={14} /> Bold Geometric
-                    </button>
-                </div>
-            </div>
-
-            {/* Elements Section */}
-            <div className="space-y-2">
-               <h3 className="text-xs font-bold text-gray-900 uppercase">Add Elements</h3>
-               <div className="grid grid-cols-3 gap-2">
-                 <button onClick={() => addElement(ElementType.SHAPE)} className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors">
-                    <Box className="text-gray-600 mb-1" size={20} />
-                    <span className="text-xs text-gray-600">Shape</span>
-                 </button>
-                 <label className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors cursor-pointer">
-                    <ImageIcon className="text-gray-600 mb-1" size={20} />
-                    <span className="text-xs text-gray-600">Image</span>
-                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, ElementType.IMAGE)} />
-                 </label>
-                 <label className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors cursor-pointer">
-                    <Hexagon className="text-gray-600 mb-1" size={20} />
-                    <span className="text-xs text-gray-600">Logo</span>
-                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, ElementType.LOGO)} />
-                 </label>
-               </div>
-            </div>
-
-            {/* Selection Properties */}
+            {/* 1. Selection Properties - MOVED TO TOP FOR IMMEDIATE EDITING */}
             {selectedElement ? (
-              <div className="space-y-3 p-3 bg-gray-50 rounded border border-gray-200 animate-in fade-in slide-in-from-right-4 duration-300">
-                 <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-xs font-bold text-blue-700 uppercase">Edit Selected</h3>
-                    <button onClick={() => deleteElement(selectedElement.id)} className="text-red-500 hover:text-red-700">
+              <div className="space-y-3 p-3 bg-blue-50 rounded border border-blue-200 animate-in fade-in slide-in-from-right-4 duration-300 shadow-sm">
+                 <div className="flex justify-between items-center mb-2 border-b border-blue-200 pb-2">
+                    <h3 className="text-xs font-bold text-blue-700 uppercase flex items-center gap-1">
+                        <Wand2 size={12} /> Edit Properties
+                    </h3>
+                    <button onClick={() => deleteElement(selectedElement.id)} className="text-red-500 hover:text-red-700 bg-white p-1 rounded border border-red-100 hover:bg-red-50 transition-colors">
                         <Trash2 size={14} />
                     </button>
                  </div>
@@ -320,11 +343,11 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                  <div className="grid grid-cols-2 gap-2">
                     <div>
                         <label className="text-[10px] text-gray-500 uppercase">Width</label>
-                        <input type="number" value={selectedElement.width} onChange={(e) => updateElement(selectedElement.id, { width: parseInt(e.target.value) })} className="w-full text-xs p-1 border rounded" />
+                        <input type="number" value={selectedElement.width} onChange={(e) => updateElement(selectedElement.id, { width: parseInt(e.target.value) })} className="w-full text-xs p-1 border rounded bg-white" />
                     </div>
                     <div>
                         <label className="text-[10px] text-gray-500 uppercase">Height</label>
-                        <input type="number" value={selectedElement.height} onChange={(e) => updateElement(selectedElement.id, { height: parseInt(e.target.value) })} className="w-full text-xs p-1 border rounded" />
+                        <input type="number" value={selectedElement.height} onChange={(e) => updateElement(selectedElement.id, { height: parseInt(e.target.value) })} className="w-full text-xs p-1 border rounded bg-white" />
                     </div>
                  </div>
 
@@ -333,16 +356,16 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                      <>
                         <div>
                             <label className="text-[10px] text-gray-500 uppercase">Content</label>
-                            <textarea value={selectedElement.content} onChange={(e) => updateElement(selectedElement.id, { content: e.target.value })} className="w-full text-xs p-1 border rounded resize-y" rows={3} />
+                            <textarea value={selectedElement.content} onChange={(e) => updateElement(selectedElement.id, { content: e.target.value })} className="w-full text-xs p-1 border rounded resize-y bg-white" rows={3} />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <div>
                                 <label className="text-[10px] text-gray-500 uppercase">Size</label>
-                                <input type="number" value={selectedElement.fontSize || 16} onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) })} className="w-full text-xs p-1 border rounded" />
+                                <input type="number" value={selectedElement.fontSize || 16} onChange={(e) => updateElement(selectedElement.id, { fontSize: parseInt(e.target.value) })} className="w-full text-xs p-1 border rounded bg-white" />
                             </div>
                             <div>
                                 <label className="text-[10px] text-gray-500 uppercase">Color</label>
-                                <input type="color" value={selectedElement.color || '#000000'} onChange={(e) => updateElement(selectedElement.id, { color: e.target.value })} className="w-full h-6 p-0 border rounded" />
+                                <input type="color" value={selectedElement.color || '#000000'} onChange={(e) => updateElement(selectedElement.id, { color: e.target.value })} className="w-full h-6 p-0 border rounded cursor-pointer" />
                             </div>
                         </div>
                         <div className="flex gap-1 bg-white p-1 rounded border border-gray-200 justify-center">
@@ -357,7 +380,7 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                  {selectedElement.type === ElementType.SHAPE && (
                     <div>
                         <label className="text-[10px] text-gray-500 uppercase">Color</label>
-                        <input type="color" value={selectedElement.backgroundColor || '#cccccc'} onChange={(e) => updateElement(selectedElement.id, { backgroundColor: e.target.value })} className="w-full h-8 p-0 border rounded" />
+                        <input type="color" value={selectedElement.backgroundColor || '#cccccc'} onChange={(e) => updateElement(selectedElement.id, { backgroundColor: e.target.value })} className="w-full h-8 p-0 border rounded cursor-pointer" />
                         <label className="text-[10px] text-gray-500 uppercase mt-2 block">Rounded</label>
                         <input type="range" min="0" max="100" value={selectedElement.borderRadius || 0} onChange={(e) => updateElement(selectedElement.id, { borderRadius: parseInt(e.target.value) })} className="w-full" />
                     </div>
@@ -389,25 +412,75 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                     </div>
                  )}
 
-                 <div className="pt-2 border-t border-gray-200 mt-2">
+                 <div className="pt-2 border-t border-blue-200 mt-2">
                     <label className="text-[10px] text-gray-500 uppercase">Layering</label>
                     <div className="flex gap-2 mt-1">
-                        <button onClick={() => updateElement(selectedElement.id, { zIndex: (selectedElement.zIndex || 1) + 1 })} className="flex-1 bg-gray-100 text-xs py-1 rounded hover:bg-gray-200">Bring Fwd</button>
-                        <button onClick={() => updateElement(selectedElement.id, { zIndex: Math.max(0, (selectedElement.zIndex || 1) - 1) })} className="flex-1 bg-gray-100 text-xs py-1 rounded hover:bg-gray-200">Send Back</button>
+                        <button onClick={() => updateElement(selectedElement.id, { zIndex: (selectedElement.zIndex || 1) + 1 })} className="flex-1 bg-white border border-gray-200 text-xs py-1 rounded hover:bg-gray-50">Bring Fwd</button>
+                        <button onClick={() => updateElement(selectedElement.id, { zIndex: Math.max(0, (selectedElement.zIndex || 1) - 1) })} className="flex-1 bg-white border border-gray-200 text-xs py-1 rounded hover:bg-gray-50">Send Back</button>
                     </div>
                  </div>
               </div>
             ) : (
-                <div className="text-center text-gray-400 text-sm py-4 border border-dashed border-gray-300 rounded">
-                    Select an element on canvas to edit
+                <div className="text-center text-gray-400 text-xs py-2 border border-dashed border-gray-300 rounded mb-4 bg-gray-50">
+                    Select an element on canvas to edit properties
                 </div>
             )}
 
-            {/* Background Settings */}
+            {/* 2. Elements Section */}
+            <div className="space-y-2">
+               <h3 className="text-xs font-bold text-gray-900 uppercase">Add Elements</h3>
+               <div className="grid grid-cols-3 gap-2">
+                 <button onClick={() => addElement(ElementType.SHAPE)} className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors">
+                    <Box className="text-gray-600 mb-1" size={20} />
+                    <span className="text-xs text-gray-600">Shape</span>
+                 </button>
+                 <label className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors cursor-pointer">
+                    <ImageIcon className="text-gray-600 mb-1" size={20} />
+                    <span className="text-xs text-gray-600">Image</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, ElementType.IMAGE)} />
+                 </label>
+                 <label className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors cursor-pointer">
+                    <Hexagon className="text-gray-600 mb-1" size={20} />
+                    <span className="text-xs text-gray-600">Logo</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, ElementType.LOGO)} />
+                 </label>
+               </div>
+            </div>
+
+            {/* 3. Auto Design Section */}
+            <div className="bg-gradient-to-r from-violet-50 to-indigo-50 p-3 rounded-lg border border-violet-100">
+                <h3 className="text-xs font-bold text-violet-800 uppercase mb-2 flex items-center gap-1">
+                    <Wand2 size={12} /> Auto-Generate Design
+                </h3>
+                <p className="text-[10px] text-violet-600 mb-2">
+                    Automatically create a layout using your entered data.
+                </p>
+                <div className="space-y-2">
+                    <button onClick={() => generateAutoDesign(AutoLayoutType.MULTI_PAGE_CORPORATE)} className="w-full flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700 p-2 rounded text-xs transition-colors shadow-sm">
+                        <Layers size={14} /> Full Profile (14 Pages)
+                    </button>
+                    <button onClick={() => generateAutoDesign(AutoLayoutType.COVER_MODERN)} className="w-full flex items-center justify-center gap-2 bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 p-2 rounded text-xs transition-colors">
+                        <Layout size={14} /> Professional Cover
+                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={() => generateAutoDesign(AutoLayoutType.MODERN_SIDEBAR)} className="flex-1 flex items-center justify-center gap-1 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors">
+                            <Layout size={14} /> Sidebar
+                        </button>
+                        <button onClick={() => generateAutoDesign(AutoLayoutType.CLASSIC_HEADER)} className="flex-1 flex items-center justify-center gap-1 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors">
+                            <Layout size={14} /> Classic
+                        </button>
+                    </div>
+                    <button onClick={() => generateAutoDesign(AutoLayoutType.BOLD_GEOMETRIC)} className="w-full flex items-center justify-center gap-2 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors">
+                        <Layout size={14} /> Bold Geometric
+                    </button>
+                </div>
+            </div>
+
+            {/* 4. Background Settings */}
             <div className="space-y-2 pt-4 border-t border-gray-200">
                <h3 className="text-xs font-bold text-gray-900 uppercase">Background</h3>
                <div className="flex items-center gap-2">
-                 <input type="color" onChange={(e) => setBackgroundColor(e.target.value)} className="h-8 w-8 p-0 border-0 rounded overflow-hidden" />
+                 <input type="color" onChange={(e) => setBackgroundColor(e.target.value)} className="h-8 w-8 p-0 border-0 rounded overflow-hidden cursor-pointer" />
                  <span className="text-xs text-gray-600">Color</span>
                </div>
                <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-2 rounded hover:bg-gray-100 border border-gray-200">
@@ -440,7 +513,10 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
 
                <div className="space-y-2 pt-6 border-t border-gray-200">
                   <h3 className="text-xs font-bold text-gray-900 uppercase">Actions</h3>
-                  <button onClick={handleExportPDF} className="w-full bg-red-600 text-white py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-red-700 transition-colors shadow-sm">
+                  <button onClick={handleExportAll} disabled={isExporting} className="w-full bg-blue-600 text-white py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50">
+                      <FileStack size={16} /> {isExporting ? 'Exporting...' : 'Export All Pages PDF'}
+                  </button>
+                  <button onClick={handleExportPDF} className="w-full bg-white text-gray-700 border border-gray-300 py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-gray-50 transition-colors shadow-sm">
                       <Download size={16} /> Export Active Page PDF
                   </button>
                   <button onClick={handlePrint} className="w-full bg-gray-800 text-white py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-gray-900 transition-colors shadow-sm">
@@ -460,6 +536,57 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
         )}
 
       </div>
+
+      {/* Hidden Container for Multi-Page Export Rendering (Portal to Body) */}
+      {isExporting && createPortal(
+          <div 
+            ref={exportContainerRef}
+            style={{ 
+                position: 'fixed', 
+                left: '-10000px', 
+                top: 0, 
+                zIndex: -1000,
+                // Ensure the container itself doesn't constrain children
+                width: 'auto',
+                height: 'auto'
+            }}
+          >
+              {pages.map(page => (
+                  <div 
+                    key={page.id}
+                    id={page.id}
+                    className="bg-white" // Ensure standard background class match
+                    style={{
+                        width: '794px', // A4 pixel width @ 96 DPI
+                        height: '1123px',
+                        backgroundColor: page.backgroundColor,
+                        backgroundImage: page.backgroundImage ? `url(${page.backgroundImage})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        // Explicitly clear text styles that might inherit from body
+                        textAlign: 'left',
+                    }}
+                  >
+                      {/* SORT ELEMENTS BY Z-INDEX FOR EXPORT */}
+                      {page.elements
+                          .slice()
+                          .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+                          .map(el => (
+                            <DraggableElement 
+                                key={el.id}
+                                element={el}
+                                isSelected={false}
+                                onSelect={() => {}}
+                                onMouseDown={() => {}}
+                            />
+                      ))}
+                  </div>
+              ))}
+          </div>,
+          document.body
+      )}
     </div>
   );
 };

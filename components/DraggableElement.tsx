@@ -1,6 +1,6 @@
 import React from 'react';
 import { CanvasElement, ElementType } from '../types';
-import { Move, CornerRightDown } from 'lucide-react';
+import { Move } from 'lucide-react';
 
 interface DraggableElementProps {
   element: CanvasElement;
@@ -45,7 +45,11 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
               textAlign: element.textAlign || 'left',
               width: '100%',
               userSelect: 'none',
-              whiteSpace: 'pre-wrap'
+              whiteSpace: 'pre-wrap',
+              lineHeight: '1.5', // Enforce consistent line height for export
+              fontFamily: 'Inter, sans-serif', // Enforce font family
+              letterSpacing: 'normal',
+              wordBreak: 'break-word'
             }}
           >
             {element.content}
