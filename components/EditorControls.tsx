@@ -181,6 +181,51 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
     }
   };
 
+  const handleExportImage = async (format: 'png' | 'jpeg', targetId: string = 'canvas-area') => {
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    // If exporting full canvas, handle transform
+    const isCanvas = targetId === 'canvas-area';
+    let originalTransform = '';
+    
+    if (isCanvas) {
+        originalTransform = input.style.transform;
+        input.style.transform = 'none';
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    try {
+        const canvas = await html2canvas(input, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: null, // Transparent for PNG if shape/text
+            scrollX: 0,
+            scrollY: 0
+        });
+
+        const mimeType = `image/${format}`;
+        const imgData = canvas.toDataURL(mimeType, 1.0);
+        
+        const link = document.createElement('a');
+        link.href = imgData;
+        const prefix = isCanvas ? companyData.name.replace(/\s+/g, '_') : 'Element';
+        link.download = `${prefix}_${targetId}.${format}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+    } catch (err) {
+        console.error("Image Export failed", err);
+        alert("Could not export image.");
+    } finally {
+        if (isCanvas) {
+            input.style.transform = originalTransform;
+        }
+    }
+  };
+
   const handleExportAll = async () => {
     setIsExporting(true);
     // Increased delay to ensure images load and portal renders correctly
@@ -509,9 +554,14 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                     <h3 className="text-xs font-bold text-blue-700 uppercase flex items-center gap-1">
                         <Wand2 size={12} /> Edit Properties
                     </h3>
-                    <button onClick={() => deleteElement(selectedElement.id)} className="text-red-500 hover:text-red-700 bg-white p-1 rounded border border-red-100 hover:bg-red-50 transition-colors">
-                        <Trash2 size={14} />
-                    </button>
+                    <div className="flex gap-1">
+                        <button onClick={() => handleExportImage('png', selectedElement.id)} className="text-blue-500 hover:text-blue-700 bg-white p-1 rounded border border-blue-100 hover:bg-blue-50 transition-colors" title="Export as PNG">
+                            <Download size={14} />
+                        </button>
+                        <button onClick={() => deleteElement(selectedElement.id)} className="text-red-500 hover:text-red-700 bg-white p-1 rounded border border-red-100 hover:bg-red-50 transition-colors" title="Delete">
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
                  </div>
                  
                  {/* Position/Size */}
@@ -694,6 +744,14 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                   <button onClick={handleExportPDF} className="w-full bg-white text-gray-700 border border-gray-300 py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-gray-50 transition-colors shadow-sm">
                       <Download size={16} /> Export Active Page PDF
                   </button>
+                  <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => handleExportImage('png')} className="bg-white text-gray-700 border border-gray-300 py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-gray-50 transition-colors shadow-sm">
+                          <ImageIcon size={16} /> Export PNG
+                      </button>
+                      <button onClick={() => handleExportImage('jpeg')} className="bg-white text-gray-700 border border-gray-300 py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-gray-50 transition-colors shadow-sm">
+                          <ImageIcon size={16} /> Export JPG
+                      </button>
+                  </div>
                   <button onClick={handlePrint} className="w-full bg-gray-800 text-white py-2 rounded flex items-center justify-center gap-2 text-sm hover:bg-gray-900 transition-colors shadow-sm">
                       <Printer size={16} /> Print Mode
                   </button>

@@ -83,6 +83,7 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
 
   return (
     <div
+      id={element.id}
       style={style}
       onMouseDown={handleMouseDown}
       className={`group hover:border-blue-300 transition-colors ${isSelected ? 'shadow-lg' : ''}`}
