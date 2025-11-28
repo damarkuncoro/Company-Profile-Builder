@@ -15,6 +15,7 @@ export interface CanvasElement {
   height: number;
   fontSize?: number;
   fontWeight?: string;
+  fontStyle?: string;
   color?: string;
   backgroundColor?: string;
   borderRadius?: number;
@@ -89,6 +90,8 @@ export enum AutoLayoutType {
   MODERN_SIDEBAR = 'MODERN_SIDEBAR',
   CLASSIC_HEADER = 'CLASSIC_HEADER',
   BOLD_GEOMETRIC = 'BOLD_GEOMETRIC',
+  MINI_PROFILE = 'MINI_PROFILE',
+  STANDARD_PROFILE = 'STANDARD_PROFILE',
   MULTI_PAGE_CORPORATE = 'MULTI_PAGE_CORPORATE',
   COVER_MODERN = 'COVER_MODERN'
 }

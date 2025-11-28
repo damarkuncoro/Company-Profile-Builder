@@ -7,7 +7,8 @@ import { DICTIONARY } from '../App';
 import { 
   Type, Image as ImageIcon, Box, Layout, Sparkles, 
   AlignLeft, AlignCenter, AlignRight, Trash2, Download, Printer, Plus,
-  Layers, Hexagon, Database, Wand2, FileStack, XCircle, Globe, ChevronDown
+  Layers, Hexagon, Database, Wand2, FileStack, XCircle, Globe, ChevronDown,
+  Bold, Italic
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -579,8 +580,8 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                     <button onClick={() => addElement(ElementType.TEXT, "Heading")} className="flex items-center gap-2 text-xs bg-gray-100 hover:bg-gray-200 p-2 rounded text-gray-700">
                         <Type size={14} /> Heading
                     </button>
-                    <button onClick={() => addElement(ElementType.TEXT, "Body text goes here...")} className="flex items-center gap-2 text-xs bg-gray-100 hover:bg-gray-200 p-2 rounded text-gray-700">
-                        <Type size={14} /> Paragraph
+                    <button onClick={() => addElement(ElementType.TEXT, "Placeholder Text")} className="flex items-center gap-2 text-xs bg-gray-100 hover:bg-gray-200 p-2 rounded text-gray-700">
+                        <Type size={14} /> Placeholder
                     </button>
                 </div>
               </div>
@@ -637,10 +638,19 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                                 <input type="color" value={selectedElement.color || '#000000'} onChange={(e) => updateElement(selectedElement.id, { color: e.target.value })} className="w-full h-6 p-0 border rounded cursor-pointer" />
                             </div>
                         </div>
-                        <div className="flex gap-1 bg-white p-1 rounded border border-gray-200 justify-center">
-                            <button onClick={() => updateElement(selectedElement.id, { textAlign: 'left' })} className={`p-1 rounded ${selectedElement.textAlign === 'left' ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`}><AlignLeft size={14}/></button>
-                            <button onClick={() => updateElement(selectedElement.id, { textAlign: 'center' })} className={`p-1 rounded ${selectedElement.textAlign === 'center' ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`}><AlignCenter size={14}/></button>
-                            <button onClick={() => updateElement(selectedElement.id, { textAlign: 'right' })} className={`p-1 rounded ${selectedElement.textAlign === 'right' ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`}><AlignRight size={14}/></button>
+                        
+                        <div className="flex gap-1 mb-2">
+                             {/* Style Toggles */}
+                             <div className="flex gap-1 bg-white p-1 rounded border border-gray-200 flex-1 justify-center">
+                                <button onClick={() => updateElement(selectedElement.id, { fontWeight: selectedElement.fontWeight === 'bold' ? 'normal' : 'bold' })} className={`p-1 rounded ${selectedElement.fontWeight === 'bold' ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`} title="Bold"><Bold size={14}/></button>
+                                <button onClick={() => updateElement(selectedElement.id, { fontStyle: selectedElement.fontStyle === 'italic' ? 'normal' : 'italic' })} className={`p-1 rounded ${selectedElement.fontStyle === 'italic' ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`} title="Italic"><Italic size={14}/></button>
+                             </div>
+                             {/* Alignment */}
+                             <div className="flex gap-1 bg-white p-1 rounded border border-gray-200 flex-1 justify-center">
+                                <button onClick={() => updateElement(selectedElement.id, { textAlign: 'left' })} className={`p-1 rounded ${selectedElement.textAlign === 'left' || !selectedElement.textAlign ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`} title="Align Left"><AlignLeft size={14}/></button>
+                                <button onClick={() => updateElement(selectedElement.id, { textAlign: 'center' })} className={`p-1 rounded ${selectedElement.textAlign === 'center' ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`} title="Align Center"><AlignCenter size={14}/></button>
+                                <button onClick={() => updateElement(selectedElement.id, { textAlign: 'right' })} className={`p-1 rounded ${selectedElement.textAlign === 'right' ? 'bg-blue-100 text-blue-600' : 'text-gray-500'}`} title="Align Right"><AlignRight size={14}/></button>
+                             </div>
                         </div>
                      </>
                  )}
@@ -684,8 +694,8 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                  <div className="pt-2 border-t border-blue-200 mt-2">
                     <label className="text-[10px] text-gray-500 uppercase">Layering</label>
                     <div className="flex gap-2 mt-1">
-                        <button onClick={() => updateElement(selectedElement.id, { zIndex: (selectedElement.zIndex || 1) + 1 })} className="flex-1 bg-white border border-gray-200 text-xs py-1 rounded hover:bg-gray-50">Bring Fwd</button>
-                        <button onClick={() => updateElement(selectedElement.id, { zIndex: Math.max(0, (selectedElement.zIndex || 1) - 1) })} className="flex-1 bg-white border border-gray-200 text-xs py-1 rounded hover:bg-gray-50">Send Back</button>
+                        <button onClick={() => updateElement(selectedElement.id, { zIndex: (selectedElement.zIndex || 1) + 1 })} className="flex-1 bg-white border border-gray-200 text-xs py-1 rounded hover:bg-gray-50">Bring Forward</button>
+                        <button onClick={() => updateElement(selectedElement.id, { zIndex: Math.max(0, (selectedElement.zIndex || 1) - 1) })} className="flex-1 bg-white border border-gray-200 text-xs py-1 rounded hover:bg-gray-50">Send Backward</button>
                     </div>
                  </div>
               </div>
@@ -725,11 +735,17 @@ export const EditorControls: React.FC<EditorControlsProps> = ({
                     Automatically create a layout using your entered data.
                 </p>
                 <div className="space-y-2">
+                    <button onClick={() => generateAutoDesign(AutoLayoutType.MINI_PROFILE)} className="w-full flex items-center gap-2 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors shadow-sm">
+                        <Layers size={14} /> Mini Profile (6 Pages)
+                    </button>
+                    <button onClick={() => generateAutoDesign(AutoLayoutType.STANDARD_PROFILE)} className="w-full flex items-center gap-2 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors shadow-sm">
+                        <Layers size={14} /> Standard Profile (10 Pages)
+                    </button>
                     <button onClick={() => generateAutoDesign(AutoLayoutType.MULTI_PAGE_CORPORATE)} className="w-full flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-700 p-2 rounded text-xs transition-colors shadow-sm">
-                        <Layers size={14} /> Full Profile (14 Pages)
+                        <Layers size={14} /> Auto-Generate Full Profile
                     </button>
                     <button onClick={() => generateAutoDesign(AutoLayoutType.COVER_MODERN)} className="w-full flex items-center justify-center gap-2 bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 p-2 rounded text-xs transition-colors">
-                        <Layout size={14} /> Professional Cover
+                        <Layout size={14} /> Auto-Generate Cover
                     </button>
                     <div className="flex gap-2">
                         <button onClick={() => generateAutoDesign(AutoLayoutType.MODERN_SIDEBAR)} className="flex-1 flex items-center justify-center gap-1 bg-white hover:bg-violet-100 text-violet-700 border border-violet-200 p-2 rounded text-xs transition-colors">

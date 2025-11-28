@@ -33,12 +33,16 @@ export const DICTIONARY = {
         title_mission: "MISI KAMI",
         title_values: "NILAI PERUSAHAAN",
         title_services: "LAYANAN UTAMA",
+        title_process: "PROSES KERJA",
         title_advantages: "KEUNGGULAN KAMI",
         title_infra: "INFRASTRUKTUR & TEKNOLOGI",
         title_clients: "KLIEN & PARTNER",
         title_portfolio: "PORTOFOLIO PROYEK",
+        title_testi: "APA KATA KLIEN",
+        title_faq: "PERTANYAAN UMUM",
         title_team: "TIM MANAJEMEN",
         title_contact: "HUBUNGI KAMI",
+        title_closing: "TERIMA KASIH",
         
         // Placeholders & Defaults
         ph_director_quote: `"Kami berkomitmen untuk memberikan solusi terbaik bagi klien kami. Perjalanan kami adalah inovasi dan dedikasi. Kami percaya pada pertumbuhan berkelanjutan dan kemitraan jangka panjang."`,
@@ -50,6 +54,7 @@ export const DICTIONARY = {
         ph_team_role_1: "Direktur Utama",
         ph_team_role_2: "Direktur Operasional",
         ph_contact_map: "Peta Lokasi Kantor",
+        ph_closing_sub: "Kami berharap dapat bekerja sama dengan Anda.",
 
         // Long Text Defaults
         default_about: "Perusahaan kami berdedikasi untuk memberikan solusi terbaik di industri. Dengan pengalaman bertahun-tahun dan tim ahli, kami menghadirkan keunggulan dalam setiap layanan.",
@@ -98,12 +103,16 @@ export const DICTIONARY = {
         title_mission: "OUR MISSION",
         title_values: "CORE VALUES",
         title_services: "MAIN SERVICES",
+        title_process: "WORKFLOW",
         title_advantages: "OUR ADVANTAGES",
         title_infra: "INFRASTRUCTURE & TECHNOLOGY",
         title_clients: "CLIENTS & PARTNERS",
         title_portfolio: "PROJECT PORTFOLIO",
+        title_testi: "TESTIMONIALS",
+        title_faq: "FAQ",
         title_team: "MANAGEMENT TEAM",
         title_contact: "CONTACT US",
+        title_closing: "THANK YOU",
 
         // Placeholders & Defaults
         ph_director_quote: `"We are committed to providing the best solutions for our clients. Our journey is one of innovation and dedication. We believe in sustainable growth and long-term partnerships."`,
@@ -115,6 +124,7 @@ export const DICTIONARY = {
         ph_team_role_1: "Chief Executive Officer",
         ph_team_role_2: "Chief Operating Officer",
         ph_contact_map: "Office Location Map",
+        ph_closing_sub: "We look forward to working with you.",
 
         // Long Text Defaults
         default_about: "Our company is dedicated to delivering the best solutions in the industry. With years of experience and a team of experts, we deliver excellence in every service.",
@@ -356,10 +366,12 @@ const App: React.FC = () => {
         desc: companyData.advantages?.[idx]?.description || defD
     });
     const getLegal = (idx: number, def: string) => companyData.legalities?.[idx] || def;
-    const getClient = (idx: number, def: string) => companyData.clients?.[idx] || def;
 
-    // SPECIAL CASE: MULTI-PAGE GENERATION
-    if (layoutType === AutoLayoutType.MULTI_PAGE_CORPORATE) {
+    // --- MULTI-PAGE GENERATORS ---
+    if (layoutType === AutoLayoutType.MULTI_PAGE_CORPORATE || 
+        layoutType === AutoLayoutType.MINI_PROFILE || 
+        layoutType === AutoLayoutType.STANDARD_PROFILE) {
+        
         const pages: Page[] = [];
 
         // Helper to add page
@@ -372,14 +384,14 @@ const App: React.FC = () => {
             });
         };
 
-        // --- DESIGN SYSTEM THEME (STRICT CONSISTENCY) ---
+        // --- DESIGN SYSTEM THEME ---
         const THEME = {
             colors: {
-                primary: '#1e293b',   // Slate 800 (Dark Corporate)
-                primaryDark: '#0f172a', // Slate 900 (Cover/Back)
-                accent: '#2563eb',    // Blue 600 (Professional Blue)
+                primary: '#1e293b',   // Slate 800
+                primaryDark: '#0f172a', // Slate 900
+                accent: '#2563eb',    // Blue 600
                 accentLight: '#dbeafe', // Blue 100
-                accentPop: '#f59e0b', // Amber 500 (Highlights)
+                accentPop: '#f59e0b', // Amber 500
                 textMain: '#334155',  // Slate 700
                 textLight: '#64748b', // Slate 500
                 bgWhite: '#ffffff',
@@ -387,9 +399,9 @@ const App: React.FC = () => {
                 line: '#e2e8f0'       // Slate 200
             },
             fonts: {
-                h1: { fontSize: 32, fontWeight: 'bold', color: '#1e293b' }, // Page Titles
-                h2: { fontSize: 22, fontWeight: 'bold', color: '#334155' }, // Section Headers
-                h3: { fontSize: 16, fontWeight: 'bold', color: '#2563eb' }, // Sub-headers
+                h1: { fontSize: 32, fontWeight: 'bold', color: '#1e293b' },
+                h2: { fontSize: 22, fontWeight: 'bold', color: '#334155' },
+                h3: { fontSize: 16, fontWeight: 'bold', color: '#2563eb' },
                 body: { fontSize: 13, color: '#334155', fontWeight: 'normal' },
                 caption: { fontSize: 11, color: '#64748b', fontWeight: 'normal' }
             },
@@ -401,263 +413,343 @@ const App: React.FC = () => {
             }
         };
 
-        // Helper: Generate Consistent Header & Footer
-        // All internal pages (2-13) will use this to ensure alignment
+        // Helper: Common Elements (Header/Footer)
         const createCommonElements = (title: string, pageNum: number): CanvasElement[] => {
             return [
-                // --- HEADER ---
-                // Decorative top bar strip
                 { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 12, backgroundColor: THEME.colors.primary, zIndex: 10 },
-                
-                // Page Title Block
                 { id: generateId(), type: ElementType.TEXT, content: title.toUpperCase(), x: THEME.layout.marginX, y: THEME.layout.headerY + 20, width: 500, height: 40, ...THEME.fonts.h1, zIndex: 1 },
-                // Underline Accent
                 { id: generateId(), type: ElementType.SHAPE, content: '', x: THEME.layout.marginX, y: THEME.layout.headerY + 60, width: 60, height: 4, backgroundColor: THEME.colors.accent, zIndex: 1 },
-
-                // --- FOOTER ---
-                // Thin Separator Line
                 { id: generateId(), type: ElementType.SHAPE, content: '', x: THEME.layout.marginX, y: THEME.layout.footerY, width: THEME.layout.contentWidth, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-                // Company Name (Left)
                 { id: generateId(), type: ElementType.TEXT, content: safeName, x: THEME.layout.marginX, y: THEME.layout.footerY + 15, width: 400, height: 20, fontSize: 10, color: THEME.colors.textLight, zIndex: 1 },
-                // Page Number (Right)
                 { id: generateId(), type: ElementType.TEXT, content: String(pageNum).padStart(2, '0'), x: 700, y: THEME.layout.footerY + 10, width: 44, height: 20, fontSize: 14, fontWeight: 'bold', color: THEME.colors.primary, textAlign: 'right', zIndex: 1 },
             ];
         };
 
-        // 1. Cover (Cover)
-        addPage(THEME.colors.primaryDark, [
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 1123, backgroundColor: THEME.colors.primaryDark, zIndex: 0 },
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 400, y: 0, width: 394, height: 1123, backgroundColor: '#1e293b', zIndex: 0 },
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 400, width: 694, height: 2, backgroundColor: THEME.colors.accent, zIndex: 1 },
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 390, width: 100, height: 4, backgroundColor: THEME.colors.accentPop, zIndex: 2 },
-             { id: generateId(), type: ElementType.TEXT, content: t.title_cover, x: 50, y: 350, width: 300, height: 40, fontSize: 18, fontWeight: 'bold', color: THEME.colors.accent, zIndex: 2 },
-             { id: generateId(), type: ElementType.TEXT, content: safeName, x: 50, y: 430, width: 694, height: 100, fontSize: 52, fontWeight: 'bold', color: '#ffffff', textAlign: 'left', zIndex: 2 },
-             { id: generateId(), type: ElementType.TEXT, content: safeTagline, x: 50, y: 550, width: 500, height: 60, fontSize: 20, color: '#94a3b8', zIndex: 2 },
-             { id: generateId(), type: ElementType.TEXT, content: new Date().getFullYear().toString(), x: 50, y: 1000, width: 694, height: 50, fontSize: 16, color: '#64748b', textAlign: 'left', zIndex: 2 },
-        ]);
+        // --- PAGE GENERATORS ---
+        const pageGenerators = {
+            cover: () => ({
+                bgColor: THEME.colors.primaryDark,
+                elements: [
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 1123, backgroundColor: THEME.colors.primaryDark, zIndex: 0 },
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 400, y: 0, width: 394, height: 1123, backgroundColor: '#1e293b', zIndex: 0 },
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 400, width: 694, height: 2, backgroundColor: THEME.colors.accent, zIndex: 1 },
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 390, width: 100, height: 4, backgroundColor: THEME.colors.accentPop, zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: t.title_cover, x: 50, y: 350, width: 300, height: 40, fontSize: 18, fontWeight: 'bold', color: THEME.colors.accent, zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: safeName, x: 50, y: 430, width: 694, height: 100, fontSize: 52, fontWeight: 'bold', color: '#ffffff', textAlign: 'left', zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: safeTagline, x: 50, y: 550, width: 500, height: 60, fontSize: 20, color: '#94a3b8', zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: new Date().getFullYear().toString(), x: 50, y: 1000, width: 694, height: 50, fontSize: 16, color: '#64748b', textAlign: 'left', zIndex: 2 },
+                ]
+            }),
+            foreword: (pageNum: number) => ({
+                bgColor: THEME.colors.bgWhite,
+                elements: [
+                    ...createCommonElements(t.title_foreword, pageNum),
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 250, height: 300, backgroundColor: '#e2e8f0', borderRadius: 2, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: t.title_director_speech, x: 330, y: 160, width: 400, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: companyData.directorMessage || t.ph_director_quote, x: 330, y: 210, width: 414, height: 200, ...THEME.fonts.body, fontSize: 14, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: companyData.directorName || "Nama Direktur", x: 330, y: 450, width: 200, height: 30, fontSize: 16, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: companyData.directorRole || t.ph_team_role_1, x: 330, y: 475, width: 200, height: 20, ...THEME.fonts.caption, zIndex: 1 },
+                ]
+            }),
+            about: (pageNum: number) => ({
+                bgColor: THEME.colors.bgAlt,
+                elements: [
+                    ...createCommonElements(t.title_about, pageNum),
+                    { id: generateId(), type: ElementType.TEXT, content: t.title_who, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: safeAbout, x: 50, y: 200, width: 694, height: 200, ...THEME.fonts.body, zIndex: 1 },
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 450, width: 694, height: 400, backgroundColor: '#cbd5e1', borderRadius: 0, zIndex: 1 },
+                ]
+            }),
+            history: (pageNum: number) => {
+                const historyList = companyData.history.length > 0 ? companyData.history : [
+                    { year: '2003', event: t.ph_history_1 },
+                    { year: '2010', event: t.ph_history_2 },
+                    { year: '2024', event: t.ph_history_3 }
+                ];
+                const els = [
+                    ...createCommonElements(t.title_history, pageNum),
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 98, y: 160, width: 4, height: Math.min(historyList.slice(0, 5).length * 150 + 50, 800), backgroundColor: THEME.colors.line, zIndex: 0 }
+                ];
+                historyList.slice(0, 5).forEach((item, idx) => {
+                    const yBase = 180 + (idx * 150);
+                    const color = idx % 2 === 0 ? THEME.colors.accent : THEME.colors.primary;
+                    els.push(
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: yBase, width: 20, height: 20, backgroundColor: color, borderRadius: 10, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: item.year || 'YEAR', x: 130, y: yBase - 5, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: color, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: item.event || 'Event description', x: 130, y: yBase + 30, width: 500, height: 100, ...THEME.fonts.body, zIndex: 1 }
+                    );
+                });
+                return { bgColor: THEME.colors.bgWhite, elements: els };
+            },
+            legality: (pageNum: number) => {
+                const l1 = getLegal(0, "Surat Izin Usaha");
+                const l2 = getLegal(1, "ISO 9001:2015");
+                const l3 = getLegal(2, "Certification");
+                return {
+                    bgColor: THEME.colors.bgAlt,
+                    elements: [
+                        ...createCommonElements(t.title_legality, pageNum),
+                        { id: generateId(), type: ElementType.TEXT, content: t.title_compliance, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: t.ph_legality_desc, x: 50, y: 200, width: 600, height: 40, ...THEME.fonts.body, zIndex: 1 },
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: l1, x: 75, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 297, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: l2, x: 322, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 544, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: l3, x: 569, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
+                    ]
+                };
+            },
+            vision: (pageNum: number) => ({
+                bgColor: THEME.colors.bgWhite,
+                elements: [
+                    ...createCommonElements(t.title_strategy, pageNum),
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 694, height: 220, backgroundColor: THEME.colors.accentLight, borderRadius: 4, zIndex: 0 },
+                    { id: generateId(), type: ElementType.TEXT, content: t.title_vision, x: 80, y: 190, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: safeVision, x: 80, y: 230, width: 634, height: 120, ...THEME.fonts.body, fontSize: 16, zIndex: 1 },
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 400, width: 694, height: 220, backgroundColor: THEME.colors.bgAlt, borderRadius: 4, zIndex: 0 },
+                    { id: generateId(), type: ElementType.TEXT, content: t.title_mission, x: 80, y: 430, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: safeMission, x: 80, y: 470, width: 634, height: 120, ...THEME.fonts.body, fontSize: 16, zIndex: 1 },
+                ]
+            }),
+            values: (pageNum: number) => {
+                const v1 = getVal(0, t.val_integrity);
+                const v2 = getVal(1, t.val_innovation);
+                const v3 = getVal(2, t.val_excellence);
+                const v4 = getVal(3, t.val_collab);
+                return {
+                    bgColor: THEME.colors.bgAlt,
+                    elements: [
+                        ...createCommonElements(t.title_values, pageNum),
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 330, height: 180, backgroundColor: THEME.colors.primary, borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: v1, x: 70, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 160, width: 330, height: 180, backgroundColor: THEME.colors.accent, borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: v2, x: 434, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 360, width: 330, height: 180, backgroundColor: '#475569', borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: v3, x: 70, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 360, width: 330, height: 180, backgroundColor: '#94a3b8', borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: v4, x: 434, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
+                    ]
+                };
+            },
+            services: (pageNum: number) => {
+                const serviceList = companyData.services.length > 0 ? companyData.services : [
+                    { title: "01. Service Name", description: t.ph_service_desc },
+                    { title: "02. Service Name", description: t.ph_service_desc },
+                    { title: "03. Service Name", description: t.ph_service_desc }
+                ];
+                const els = [ ...createCommonElements(t.title_services, pageNum) ];
+                serviceList.slice(0, 5).forEach((item, idx) => {
+                    const yBase = 160 + (idx * 150);
+                    els.push(
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: yBase, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
+                        { id: generateId(), type: ElementType.TEXT, content: item.title || 'Service Title', x: 50, y: yBase + 15, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: item.description || 'Description', x: 50, y: yBase + 55, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 }
+                    );
+                });
+                return { bgColor: THEME.colors.bgWhite, elements: els };
+            },
+            process: (pageNum: number) => ({
+                bgColor: THEME.colors.bgAlt,
+                elements: [
+                    ...createCommonElements(t.title_process, pageNum),
+                    // Step 1
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 100, y: 200, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "01", x: 100, y: 250, width: 150, height: 40, fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.accent, zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: "Konsultasi", x: 100, y: 300, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: THEME.colors.textMain, zIndex: 2 },
+                    // Arrow
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 270, y: 270, width: 50, height: 4, backgroundColor: THEME.colors.line, zIndex: 1 },
+                    // Step 2
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 340, y: 200, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "02", x: 340, y: 250, width: 150, height: 40, fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.accent, zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: "Perencanaan", x: 340, y: 300, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: THEME.colors.textMain, zIndex: 2 },
+                     // Arrow
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 510, y: 270, width: 50, height: 4, backgroundColor: THEME.colors.line, zIndex: 1 },
+                    // Step 3
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 580, y: 200, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "03", x: 580, y: 250, width: 150, height: 40, fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.accent, zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: "Eksekusi", x: 580, y: 300, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: THEME.colors.textMain, zIndex: 2 },
+                    
+                    // Row 2
+                     // Step 4
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 220, y: 450, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "04", x: 220, y: 500, width: 150, height: 40, fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.accent, zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: "Review", x: 220, y: 550, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: THEME.colors.textMain, zIndex: 2 },
+                     // Step 5
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 460, y: 450, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "05", x: 460, y: 500, width: 150, height: 40, fontSize: 36, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.accent, zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: "Selesai", x: 460, y: 550, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: THEME.colors.textMain, zIndex: 2 },
+                ]
+            }),
+            advantages: (pageNum: number) => {
+                const a1 = getAdv(0, t.adv_1_title, t.adv_1_desc);
+                const a2 = getAdv(1, t.adv_2_title, t.adv_2_desc);
+                const a3 = getAdv(2, t.adv_3_title, t.adv_3_desc);
+                const a4 = getAdv(3, t.adv_4_title, t.adv_4_desc);
+                return {
+                    bgColor: THEME.colors.bgAlt,
+                    elements: [
+                        ...createCommonElements(t.title_advantages, pageNum),
+                        { id: generateId(), type: ElementType.TEXT, content: a1.title, x: 50, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: a1.desc, x: 50, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: a2.title, x: 400, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: a2.desc, x: 400, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: a3.title, x: 50, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: a3.desc, x: 50, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: a4.title, x: 400, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: a4.desc, x: 400, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
+                    ]
+                };
+            },
+            infra: (pageNum: number) => ({
+                bgColor: THEME.colors.bgWhite,
+                elements: [
+                    ...createCommonElements(t.title_infra, pageNum),
+                    { id: generateId(), type: ElementType.TEXT, content: t.infra_facility_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: safeInfra, x: 50, y: 200, width: 600, height: 80, ...THEME.fonts.body, zIndex: 1 },
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 300, width: 694, height: 400, backgroundColor: '#cbd5e1', borderRadius: 0, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "Photo Data Center / Infrastructure", x: 50, y: 710, width: 300, height: 20, ...THEME.fonts.caption, zIndex: 1 },
+                ]
+            }),
+            clients: (pageNum: number) => {
+                const clientsList = companyData.clients.filter(c => c.trim() !== "");
+                const displayClients = clientsList.length > 0 ? clientsList : ["CLIENT 1", "CLIENT 2", "CLIENT 3", "CLIENT 4", "CLIENT 5", "CLIENT 6"];
+                const els = [
+                    ...createCommonElements(t.title_clients, pageNum),
+                    { id: generateId(), type: ElementType.TEXT, content: t.client_trusted_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 }
+                ];
+                displayClients.slice(0, 12).forEach((clientName, idx) => {
+                    const row = Math.floor(idx / 3);
+                    const col = idx % 3;
+                    const x = 50 + (col * 240);
+                    const y = 220 + (row * 120);
+                    els.push(
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: x, y: y, width: 210, height: 100, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: clientName, x: x + 10, y: y + 40, width: 190, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 }
+                    );
+                });
+                return { bgColor: THEME.colors.bgAlt, elements: els };
+            },
+            portfolio: (pageNum: number) => {
+                const projectList = companyData.projects.length > 0 ? companyData.projects : [
+                    { name: "Project A", description: "Description A" },
+                    { name: "Project B", description: "Description B" }
+                ];
+                const els = [ ...createCommonElements(t.title_portfolio, pageNum) ];
+                projectList.slice(0, 4).forEach((proj, idx) => {
+                    const row = Math.floor(idx / 2);
+                    const col = idx % 2;
+                    const x = 50 + (col * 364);
+                    const y = 160 + (row * 280);
+                    els.push(
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: x, y: y, width: 330, height: 180, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: proj.name || 'Project Name', x: x, y: y + 190, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: proj.description || 'Project Desc', x: x, y: y + 220, width: 330, height: 50, ...THEME.fonts.body, zIndex: 1 }
+                    );
+                });
+                return { bgColor: THEME.colors.bgWhite, elements: els };
+            },
+            testimonials: (pageNum: number) => ({
+                bgColor: THEME.colors.bgAlt,
+                 elements: [
+                    ...createCommonElements(t.title_testi, pageNum),
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 200, width: 694, height: 150, backgroundColor: '#ffffff', borderRadius: 8, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "\"Layanan yang sangat memuaskan, tim sangat profesional dan responsif.\"", x: 80, y: 230, width: 634, height: 60, ...THEME.fonts.body, fontStyle: 'italic', zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: "- John Doe, CEO Tech Corp", x: 80, y: 300, width: 634, height: 20, fontSize: 12, fontWeight: 'bold', color: THEME.colors.primary, textAlign: 'right', zIndex: 2 },
+                    
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 380, width: 694, height: 150, backgroundColor: '#ffffff', borderRadius: 8, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "\"Solusi yang diberikan sangat membantu efisiensi bisnis kami.\"", x: 80, y: 410, width: 634, height: 60, ...THEME.fonts.body, fontStyle: 'italic', zIndex: 2 },
+                    { id: generateId(), type: ElementType.TEXT, content: "- Jane Smith, Manager", x: 80, y: 480, width: 634, height: 20, fontSize: 12, fontWeight: 'bold', color: THEME.colors.primary, textAlign: 'right', zIndex: 2 }
+                ]
+            }),
+            faq: (pageNum: number) => ({
+                bgColor: THEME.colors.bgWhite,
+                elements: [
+                    ...createCommonElements(t.title_faq, pageNum),
+                    { id: generateId(), type: ElementType.TEXT, content: "Q: Apakah layanan ini bergaransi?", x: 50, y: 160, width: 694, height: 30, fontSize: 16, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "A: Ya, kami memberikan garansi dan SLA (Service Level Agreement) untuk setiap layanan yang kami berikan.", x: 50, y: 195, width: 694, height: 50, ...THEME.fonts.body, zIndex: 1 },
+                    
+                    { id: generateId(), type: ElementType.TEXT, content: "Q: Berapa lama proses pengerjaan?", x: 50, y: 260, width: 694, height: 30, fontSize: 16, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "A: Waktu pengerjaan bervariasi tergantung skala proyek, namun kami selalu berkomitmen pada timeline yang disepakati.", x: 50, y: 295, width: 694, height: 50, ...THEME.fonts.body, zIndex: 1 },
+                    
+                    { id: generateId(), type: ElementType.TEXT, content: "Q: Apakah melayani seluruh Indonesia?", x: 50, y: 360, width: 694, height: 30, fontSize: 16, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "A: Tentu, kami memiliki jaringan partner dan cabang yang tersebar di berbagai kota besar di Indonesia.", x: 50, y: 395, width: 694, height: 50, ...THEME.fonts.body, zIndex: 1 },
+                ]
+            }),
+            team: (pageNum: number) => {
+                const teamList = companyData.teamMembers.length > 0 ? companyData.teamMembers : [
+                    { name: "Name 1", role: "Role 1" },
+                    { name: "Name 2", role: "Role 2" }
+                ];
+                const els = [ ...createCommonElements(t.title_team, pageNum) ];
+                teamList.slice(0, 6).forEach((member, idx) => {
+                    const row = Math.floor(idx / 2);
+                    const col = idx % 2;
+                    const x = 125 + (col * 350);
+                    const y = 200 + (row * 250);
+                    els.push(
+                        { id: generateId(), type: ElementType.SHAPE, content: '', x: x + 25, y: y, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: member.name || 'Name', x: x, y: y + 160, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
+                        { id: generateId(), type: ElementType.TEXT, content: member.role || 'Role', x: x, y: y + 190, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 }
+                    );
+                });
+                return { bgColor: THEME.colors.bgAlt, elements: els };
+            },
+            contact: (pageNum: number) => ({
+                 bgColor: THEME.colors.bgWhite,
+                 elements: [
+                    ...createCommonElements(t.title_contact, pageNum),
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 330, height: 200, backgroundColor: '#eff6ff', borderRadius: 8, zIndex: 0 },
+                    { id: generateId(), type: ElementType.TEXT, content: "OFFICE", x: 70, y: 180, width: 290, height: 30, ...THEME.fonts.h3, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: safeContact, x: 70, y: 220, width: 290, height: 120, ...THEME.fonts.body, zIndex: 1 },
+                    
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 160, width: 330, height: 200, backgroundColor: '#fff7ed', borderRadius: 8, zIndex: 0 },
+                    { id: generateId(), type: ElementType.TEXT, content: "BUSINESS HOURS", x: 434, y: 180, width: 290, height: 30, ...THEME.fonts.h3, color: '#c2410c', zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "Monday - Friday\n08:00 - 17:00", x: 434, y: 220, width: 290, height: 120, ...THEME.fonts.body, zIndex: 1 },
+                    
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 400, width: 694, height: 400, backgroundColor: '#e2e8f0', borderRadius: 8, zIndex: 0 },
+                    { id: generateId(), type: ElementType.TEXT, content: t.ph_contact_map, x: 50, y: 600, width: 694, height: 30, textAlign: 'center', color: '#64748b', zIndex: 1 }
+                 ]
+            }),
+            closing: () => ({
+                bgColor: THEME.colors.primaryDark,
+                elements: [
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 1123, backgroundColor: THEME.colors.primaryDark, zIndex: 0 },
+                    { id: generateId(), type: ElementType.TEXT, content: t.title_closing, x: 50, y: 400, width: 694, height: 80, fontSize: 60, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 1 },
+                    { id: generateId(), type: ElementType.SHAPE, content: '', x: 347, y: 500, width: 100, height: 4, backgroundColor: THEME.colors.accent, zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: t.ph_closing_sub, x: 100, y: 550, width: 594, height: 50, fontSize: 18, color: '#cbd5e1', textAlign: 'center', zIndex: 1 },
+                    { id: generateId(), type: ElementType.TEXT, content: "www.perusahaan.co.id", x: 50, y: 1000, width: 694, height: 30, fontSize: 16, color: '#64748b', textAlign: 'center', zIndex: 1 },
+                ]
+            })
+        };
 
-        // 2. Kata Pengantar / Sambutan Direktur
-        addPage(THEME.colors.bgWhite, [
-             ...createCommonElements(t.title_foreword, 2),
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 250, height: 300, backgroundColor: '#e2e8f0', borderRadius: 2, zIndex: 1 }, // Photo Placeholder
-             { id: generateId(), type: ElementType.TEXT, content: t.title_director_speech, x: 330, y: 160, width: 400, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: companyData.directorMessage || t.ph_director_quote, x: 330, y: 210, width: 414, height: 200, ...THEME.fonts.body, fontSize: 14, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: companyData.directorName || "Nama Direktur", x: 330, y: 450, width: 200, height: 30, fontSize: 16, fontWeight: 'bold', color: THEME.colors.primary, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: companyData.directorRole || t.ph_team_role_1, x: 330, y: 475, width: 200, height: 20, ...THEME.fonts.caption, zIndex: 1 },
-        ]);
+        // --- DEFINE PAGE LAYOUTS ---
+        let selectedLayout: string[] = [];
 
-        // 3. Profil Singkat Perusahaan
-        addPage(THEME.colors.bgAlt, [
-             ...createCommonElements(t.title_about, 3),
-             { id: generateId(), type: ElementType.TEXT, content: t.title_who, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: safeAbout, x: 50, y: 200, width: 694, height: 200, ...THEME.fonts.body, zIndex: 1 },
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 450, width: 694, height: 400, backgroundColor: '#cbd5e1', borderRadius: 0, zIndex: 1 }, // Image placeholder
-        ]);
+        if (layoutType === AutoLayoutType.MINI_PROFILE) {
+            // 6 Pages: Cover, About, Services, Advantages, Portfolio, Contact
+            selectedLayout = ['cover', 'about', 'services', 'advantages', 'portfolio', 'contact'];
+        } else if (layoutType === AutoLayoutType.STANDARD_PROFILE) {
+            // 10 Pages: Cover, About, Vision, History, Services, Advantages, Portfolio, Clients, Team, Contact
+            selectedLayout = ['cover', 'about', 'vision', 'history', 'services', 'advantages', 'portfolio', 'clients', 'team', 'contact'];
+        } else {
+            // CORPORATE (18 Pages): Comprehensive Structure (10-20 Pages)
+            selectedLayout = [
+                'cover', 'foreword', 'about', 'history', 'legality', 
+                'vision', 'values', 'services', 'process', 'advantages', 
+                'infra', 'clients', 'portfolio', 'testimonials', 'faq', 'team', 'contact', 'closing'
+            ];
+        }
 
-        // 4. Sejarah Perusahaan (Dynamic History)
-        const historyList = companyData.history.length > 0 ? companyData.history : [
-            { year: '2003', event: t.ph_history_1 },
-            { year: '2010', event: t.ph_history_2 },
-            { year: '2024', event: t.ph_history_3 }
-        ];
-
-        const historyPageElements = [
-            ...createCommonElements(t.title_history, 4),
-            // Vertical Line
-            { id: generateId(), type: ElementType.SHAPE, content: '', x: 98, y: 160, width: 4, height: Math.min(historyList.slice(0, 5).length * 160, 800), backgroundColor: THEME.colors.line, zIndex: 0 }
-        ];
-
-        historyList.slice(0, 5).forEach((item, idx) => { // Max 5 items per page
-            const yBase = 180 + (idx * 160);
-            const color = idx % 3 === 0 ? THEME.colors.accent : (idx % 3 === 1 ? THEME.colors.primary : THEME.colors.accentPop);
-            
-            historyPageElements.push(
-                { id: generateId(), type: ElementType.SHAPE, content: '', x: 90, y: yBase, width: 20, height: 20, backgroundColor: color, borderRadius: 10, zIndex: 1 },
-                { id: generateId(), type: ElementType.TEXT, content: item.year || 'YEAR', x: 130, y: yBase - 5, width: 100, height: 30, fontSize: 20, fontWeight: 'bold', color: color, zIndex: 1 },
-                { id: generateId(), type: ElementType.TEXT, content: item.event || 'Event description', x: 130, y: yBase + 30, width: 500, height: 100, ...THEME.fonts.body, zIndex: 1 }
-            );
+        // GENERATE PAGES
+        selectedLayout.forEach((pageKey, idx) => {
+            // @ts-ignore
+            const generator = pageGenerators[pageKey];
+            if (generator) {
+                const { bgColor, elements } = generator(idx + 1); // Page Number is index + 1
+                addPage(bgColor, elements);
+            }
         });
-        addPage(THEME.colors.bgWhite, historyPageElements);
-
-        // 5. Legalitas & Sertifikasi
-        const l1 = getLegal(0, "Surat Izin Usaha");
-        const l2 = getLegal(1, "ISO 9001:2015");
-        const l3 = getLegal(2, "Certification");
-
-        addPage(THEME.colors.bgAlt, [
-             ...createCommonElements(t.title_legality, 5),
-             { id: generateId(), type: ElementType.TEXT, content: t.title_compliance, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: t.ph_legality_desc, x: 50, y: 200, width: 600, height: 40, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: l1, x: 75, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
-             
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 297, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: l2, x: 322, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 544, y: 260, width: 200, height: 150, backgroundColor: '#ffffff', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: l3, x: 569, y: 325, width: 150, height: 20, fontSize: 14, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 2 },
-        ]);
-
-        // 6. Visi & Misi
-        addPage(THEME.colors.bgWhite, [
-             ...createCommonElements(t.title_strategy, 6),
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 694, height: 220, backgroundColor: THEME.colors.accentLight, borderRadius: 4, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: t.title_vision, x: 80, y: 190, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: safeVision, x: 80, y: 230, width: 634, height: 120, ...THEME.fonts.body, fontSize: 16, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 400, width: 694, height: 220, backgroundColor: THEME.colors.bgAlt, borderRadius: 4, zIndex: 0 },
-             { id: generateId(), type: ElementType.TEXT, content: t.title_mission, x: 80, y: 430, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: safeMission, x: 80, y: 470, width: 634, height: 120, ...THEME.fonts.body, fontSize: 16, zIndex: 1 },
-        ]);
-
-        // 7. Nilai Perusahaan
-        const v1 = getVal(0, t.val_integrity);
-        const v2 = getVal(1, t.val_innovation);
-        const v3 = getVal(2, t.val_excellence);
-        const v4 = getVal(3, t.val_collab);
-
-        addPage(THEME.colors.bgAlt, [
-             ...createCommonElements(t.title_values, 7),
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 160, width: 330, height: 180, backgroundColor: THEME.colors.primary, borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: v1, x: 70, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 160, width: 330, height: 180, backgroundColor: THEME.colors.accent, borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: v2, x: 434, y: 235, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 360, width: 330, height: 180, backgroundColor: '#475569', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: v3, x: 70, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
-
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 414, y: 360, width: 330, height: 180, backgroundColor: '#94a3b8', borderRadius: 2, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: v4, x: 434, y: 435, width: 290, height: 30, fontSize: 20, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 2 },
-        ]);
-
-        // 8. Layanan Utama (Dynamic Services)
-        const serviceList = companyData.services.length > 0 ? companyData.services : [
-            { title: "01. Service Name", description: t.ph_service_desc },
-            { title: "02. Service Name", description: t.ph_service_desc },
-            { title: "03. Service Name", description: t.ph_service_desc }
-        ];
-
-        const servicePageElements = [ ...createCommonElements(t.title_services, 8) ];
-        serviceList.slice(0, 5).forEach((item, idx) => {
-            const yBase = 160 + (idx * 140);
-            servicePageElements.push(
-                { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: yBase, width: 694, height: 1, backgroundColor: THEME.colors.line, zIndex: 0 },
-                { id: generateId(), type: ElementType.TEXT, content: item.title || 'Service Title', x: 50, y: yBase + 20, width: 400, height: 30, ...THEME.fonts.h2, zIndex: 1 },
-                { id: generateId(), type: ElementType.TEXT, content: item.description || 'Description', x: 50, y: yBase + 60, width: 600, height: 60, ...THEME.fonts.body, zIndex: 1 }
-            );
-        });
-        addPage(THEME.colors.bgWhite, servicePageElements);
-
-        // 9. Keunggulan Perusahaan
-        const a1 = getAdv(0, t.adv_1_title, t.adv_1_desc);
-        const a2 = getAdv(1, t.adv_2_title, t.adv_2_desc);
-        const a3 = getAdv(2, t.adv_3_title, t.adv_3_desc);
-        const a4 = getAdv(3, t.adv_4_title, t.adv_4_desc);
-
-        addPage(THEME.colors.bgAlt, [
-             ...createCommonElements(t.title_advantages, 9),
-             { id: generateId(), type: ElementType.TEXT, content: a1.title, x: 50, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: a1.desc, x: 50, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.TEXT, content: a2.title, x: 400, y: 160, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: a2.desc, x: 400, y: 190, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.TEXT, content: a3.title, x: 50, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: a3.desc, x: 50, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
-
-             { id: generateId(), type: ElementType.TEXT, content: a4.title, x: 400, y: 280, width: 300, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: a4.desc, x: 400, y: 310, width: 300, height: 60, ...THEME.fonts.body, zIndex: 1 },
-        ]);
-
-        // 10. Infrastruktur / Teknologi
-        addPage(THEME.colors.bgWhite, [
-             ...createCommonElements(t.title_infra, 10),
-             { id: generateId(), type: ElementType.TEXT, content: t.infra_facility_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: safeInfra, x: 50, y: 200, width: 600, height: 40, ...THEME.fonts.body, zIndex: 1 },
-             { id: generateId(), type: ElementType.SHAPE, content: '', x: 50, y: 250, width: 694, height: 400, backgroundColor: '#cbd5e1', borderRadius: 0, zIndex: 1 },
-             { id: generateId(), type: ElementType.TEXT, content: "Photo Data Center / Infrastructure", x: 50, y: 660, width: 300, height: 20, ...THEME.fonts.caption, zIndex: 1 },
-        ]);
-
-        // 11. Klien & Partner (Dynamic Grid)
-        const clientsList = companyData.clients.filter(c => c.trim() !== "");
-        const displayClients = clientsList.length > 0 ? clientsList : ["CLIENT 1", "CLIENT 2", "CLIENT 3", "CLIENT 4"];
-
-        const clientPageElements = [
-             ...createCommonElements(t.title_clients, 11),
-             { id: generateId(), type: ElementType.TEXT, content: t.client_trusted_title, x: 50, y: 160, width: 600, height: 30, ...THEME.fonts.h3, zIndex: 1 }
-        ];
-        
-        displayClients.slice(0, 8).forEach((clientName, idx) => {
-             const row = Math.floor(idx / 4);
-             const col = idx % 4;
-             const x = 50 + (col * 180);
-             const y = 220 + (row * 100);
-             
-             clientPageElements.push(
-                { id: generateId(), type: ElementType.SHAPE, content: '', x: x, y: y, width: 150, height: 80, backgroundColor: '#ffffff', borderRadius: 4, zIndex: 1 },
-                { id: generateId(), type: ElementType.TEXT, content: clientName, x: x, y: y + 30, width: 150, height: 30, textAlign: 'center', fontSize: 14, fontWeight: 'bold', color: '#94a3b8', zIndex: 2 }
-             );
-        });
-        addPage(THEME.colors.bgAlt, clientPageElements);
-
-        // 12. Portofolio Proyek (Dynamic)
-        const projectList = companyData.projects.length > 0 ? companyData.projects : [
-             { name: "Project A", description: "Description A" },
-             { name: "Project B", description: "Description B" }
-        ];
-
-        const projectPageElements = [ ...createCommonElements(t.title_portfolio, 12) ];
-        projectList.slice(0, 4).forEach((proj, idx) => {
-            const row = Math.floor(idx / 2); // 2 per row
-            const col = idx % 2;
-            const x = 50 + (col * 364);
-            const y = 160 + (row * 240);
-            
-            projectPageElements.push(
-                 { id: generateId(), type: ElementType.SHAPE, content: '', x: x, y: y, width: 330, height: 160, backgroundColor: '#cbd5e1', borderRadius: 2, zIndex: 1 }, // Image placeholder
-                 { id: generateId(), type: ElementType.TEXT, content: proj.name || 'Project Name', x: x, y: y + 170, width: 330, height: 30, ...THEME.fonts.h3, zIndex: 1 },
-                 { id: generateId(), type: ElementType.TEXT, content: proj.description || 'Project Desc', x: x, y: y + 200, width: 330, height: 40, ...THEME.fonts.body, zIndex: 1 }
-            );
-        });
-        addPage(THEME.colors.bgWhite, projectPageElements);
-
-        // 13. Tim Manajemen (Dynamic)
-        const teamList = companyData.teamMembers.length > 0 ? companyData.teamMembers : [
-             { name: "Name 1", role: "Role 1" },
-             { name: "Name 2", role: "Role 2" }
-        ];
-
-        const teamPageElements = [ ...createCommonElements(t.title_team, 13) ];
-        teamList.slice(0, 4).forEach((member, idx) => {
-             const row = Math.floor(idx / 2);
-             const col = idx % 2;
-             const x = 125 + (col * 350);
-             const y = 200 + (row * 250);
-
-             teamPageElements.push(
-                 { id: generateId(), type: ElementType.SHAPE, content: '', x: x + 25, y: y, width: 150, height: 150, backgroundColor: '#ffffff', borderRadius: 75, zIndex: 1 },
-                 { id: generateId(), type: ElementType.TEXT, content: member.name || 'Name', x: x, y: y + 160, width: 200, height: 30, fontSize: 18, fontWeight: 'bold', textAlign: 'center', color: THEME.colors.primary, zIndex: 1 },
-                 { id: generateId(), type: ElementType.TEXT, content: member.role || 'Role', x: x, y: y + 190, width: 200, height: 20, fontSize: 14, textAlign: 'center', color: THEME.colors.textLight, zIndex: 1 }
-             );
-        });
-        addPage(THEME.colors.bgAlt, teamPageElements);
-
-        // 14. Kontak & Lokasi (Back Cover)
-        addPage(THEME.colors.primaryDark, [
-            { id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 0, width: 794, height: 1123, backgroundColor: THEME.colors.primaryDark, zIndex: 0 },
-            
-            { id: generateId(), type: ElementType.TEXT, content: t.title_contact, x: 50, y: 100, width: 694, height: 60, fontSize: 48, fontWeight: 'bold', color: '#ffffff', textAlign: 'center', zIndex: 1 },
-            { id: generateId(), type: ElementType.SHAPE, content: '', x: 347, y: 180, width: 100, height: 4, backgroundColor: THEME.colors.accent, zIndex: 1 },
-            
-            { id: generateId(), type: ElementType.TEXT, content: safeContact, x: 100, y: 250, width: 594, height: 200, fontSize: 18, color: '#e2e8f0', textAlign: 'center', zIndex: 1 },
-            
-            { id: generateId(), type: ElementType.SHAPE, content: '', x: 100, y: 500, width: 594, height: 400, backgroundColor: '#1e293b', zIndex: 1 }, // Map Placeholder
-            { id: generateId(), type: ElementType.TEXT, content: t.ph_contact_map, x: 100, y: 700, width: 594, height: 30, fontSize: 14, color: '#64748b', textAlign: 'center', zIndex: 2 },
-            
-            { id: generateId(), type: ElementType.TEXT, content: "www.perusahaan.co.id", x: 50, y: 1000, width: 694, height: 30, fontSize: 16, color: '#64748b', textAlign: 'center', zIndex: 1 },
-        ]);
 
         setCanvasState({
             pages: pages,
@@ -761,6 +853,26 @@ const App: React.FC = () => {
       elements.push({ id: generateId(), type: ElementType.SHAPE, content: '', x: 0, y: 1050, width: 794, height: 73, backgroundColor: '#ffffff', zIndex: 2 });
       elements.push({ id: generateId(), type: ElementType.TEXT, content: safeContact.split('|')[0] || 'www.company.com', x: 50, y: 1075, width: 694, height: 30, fontSize: 14, color: '#0f172a', textAlign: 'right', fontWeight: 'bold', zIndex: 3 });
 
+      // --- APPLY ONLY TO FIRST PAGE (COVER) ---
+      setCanvasState(prev => {
+          const newPages = [...prev.pages];
+          if (newPages.length > 0) {
+              newPages[0] = {
+                  ...newPages[0],
+                  elements: elements,
+                  backgroundColor: bgColor,
+                  backgroundImage: undefined,
+                  backgroundOpacity: 1
+              };
+          }
+          return {
+              ...prev,
+              pages: newPages,
+              activePageId: newPages[0].id, // Navigate to the cover page
+              selectedId: null
+          };
+      });
+      return; 
     }
 
     // Overwrite current page content for single page layouts
@@ -785,35 +897,35 @@ const App: React.FC = () => {
     };
 
     if (type === TemplateType.CORPORATE) {
-        // High Contrast Professional - Classic Blue & Slate
+        // Corporate Blue: Clean Professional
         theme = {
             bgColor: '#ffffff',
-            h1Color: '#020617', // Slate 950 (Almost Black)
-            h2Color: '#172554', // Blue 950 (Deep Navy)
-            bodyColor: '#334155', // Slate 700 (Dark Gray for readability)
-            shapePrimary: '#1e40af', // Blue 800
-            shapeAccent: '#60a5fa', // Blue 400
+            h1Color: '#0f172a', // Slate 900 (Darkest Blue-Grey)
+            h2Color: '#1e40af', // Blue 800
+            bodyColor: '#334155', // Slate 700 (Legible Dark Grey)
+            shapePrimary: '#1e3a8a', // Blue 900
+            shapeAccent: '#3b82f6', // Blue 500
             isDark: false
         };
     } else if (type === TemplateType.CREATIVE) {
-        // Bold & Modern - Clean White with Violet/Pink Accents
+        // Creative Studio: Bold, Expressive, Clean
         theme = {
-            bgColor: '#ffffff', 
-            h1Color: '#4c1d95', // Violet 900
+            bgColor: '#fafafa', // Neutral 50 (Off-white)
+            h1Color: '#5b21b6', // Violet 800
             h2Color: '#be185d', // Pink 700
-            bodyColor: '#1f2937', // Gray 800
-            shapePrimary: '#7c3aed', // Violet 600
+            bodyColor: '#374151', // Gray 700 (High contrast)
+            shapePrimary: '#8b5cf6', // Violet 500
             shapeAccent: '#f472b6', // Pink 400
             isDark: false
         };
     } else if (type === TemplateType.STARTUP) {
-        // Minimalist Dark - High Legibility
+        // Tech Startup: Deep Dark Mode with Neon
         theme = {
-            bgColor: '#111827', // Gray 900
-            h1Color: '#ffffff', // White
-            h2Color: '#38bdf8', // Sky 400 (Bright Blue)
-            bodyColor: '#e5e7eb', // Gray 200 (High contrast against dark bg)
-            shapePrimary: '#374151', // Gray 700
+            bgColor: '#0f172a', // Slate 900 (Deep Background)
+            h1Color: '#ffffff', // Pure White
+            h2Color: '#38bdf8', // Sky 400 (Neon Blue)
+            bodyColor: '#cbd5e1', // Slate 300 (Light Grey for readability)
+            shapePrimary: '#1e293b', // Slate 800 (Surface)
             shapeAccent: '#0ea5e9', // Sky 500
             isDark: true
         };
@@ -838,19 +950,25 @@ const App: React.FC = () => {
                         // Smart Typography Mapping
                         if (fontSize >= 24) {
                             newColor = theme.h1Color;
-                        } else if (fontSize >= 18) {
+                        } else if (fontSize >= 16) {
                             newColor = theme.h2Color;
                         } else {
                             newColor = theme.bodyColor;
                         }
 
-                        // Special Case: Inverting colors for Dark Mode
-                        // If we are switching to Dark Mode, ensure any previously dark text becomes light
-                        if (theme.isDark && (el.color === '#000000' || el.color?.startsWith('#3') || el.color?.startsWith('#1'))) {
-                             // Use the mapped color (which is already light)
-                             // This block prevents random dark text from remaining dark on dark bg
+                        // INVERSION LOGIC: If switching to dark mode, make sure dark text becomes light.
+                        // If switching to light mode, make sure light text becomes dark.
+                        const currentIsDarkText = el.color ? !el.color.startsWith('#f') && !el.color.startsWith('#e') && !el.color.startsWith('#d') && el.color !== '#ffffff' : true;
+                        
+                        if (theme.isDark && currentIsDarkText) {
+                            // Going Dark: If text was dark, force it to the new light theme color
+                            return { ...el, color: newColor };
+                        } else if (!theme.isDark && !currentIsDarkText) {
+                             // Going Light: If text was light (e.g. from previous dark mode), force it to new dark theme color
+                            return { ...el, color: newColor };
                         }
                         
+                        // Otherwise, if we are mapped to a specific hierarchy color, apply it
                         return { ...el, color: newColor };
                     }
                     
@@ -934,10 +1052,10 @@ const App: React.FC = () => {
       />
 
       {/* MAIN WORKSPACE */}
-      <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 flex flex-col relative h-full min-w-0">
         
         {/* Toolbar */}
-        <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-10 no-print shadow-sm">
+        <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-10 no-print shadow-sm flex-shrink-0">
             <div className="flex items-center gap-2">
                 <span className="font-bold text-gray-700">ProProfile Editor</span>
             </div>
@@ -992,57 +1110,67 @@ const App: React.FC = () => {
 
         {/* Canvas Area Container - Better Center & Scroll */}
         <div 
-            className="flex-1 overflow-auto bg-gray-200 flex justify-center p-8 relative"
+            className="flex-1 overflow-auto bg-gray-200 relative scroll-smooth"
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
         >
-            {/* 
-               Wrapper controls the scrollable area size based on zoom 
-               This fixes the visual positioning/scrollbar issues
-            */}
-            <div 
-                style={{ 
-                    width: `${INITIAL_CANVAS_WIDTH * zoom}px`, 
-                    height: `${INITIAL_CANVAS_HEIGHT * zoom}px`,
-                    position: 'relative',
-                    transition: 'width 0.1s, height 0.1s'
-                }}
-            >
+            <div className="min-w-fit min-h-full flex items-center justify-center p-12">
+                {/* 
+                   Wrapper controls the scrollable area size based on zoom 
+                   This fixes the visual positioning/scrollbar issues
+                */}
                 <div 
-                    id="canvas-area"
-                    className="bg-white shadow-2xl absolute top-0 left-0 origin-top-left"
-                    style={{
-                        width: `${INITIAL_CANVAS_WIDTH}px`,
-                        height: `${INITIAL_CANVAS_HEIGHT}px`,
-                        backgroundColor: activePage.backgroundColor,
-                        backgroundImage: activePage.backgroundImage ? `url(${activePage.backgroundImage})` : 'none',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        transform: `scale(${zoom})`,
+                    style={{ 
+                        width: `${INITIAL_CANVAS_WIDTH * zoom}px`, 
+                        height: `${INITIAL_CANVAS_HEIGHT * zoom}px`,
+                        position: 'relative',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        flexShrink: 0,
+                        transition: 'width 0.1s, height 0.1s'
                     }}
-                    onClick={() => setCanvasState(prev => ({...prev, selectedId: null}))}
                 >
-                    {/* SORT ELEMENTS BY Z-INDEX FOR DISPLAY */}
-                    {activeElements
-                        .slice()
-                        .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
-                        .map(el => (
-                            <DraggableElement 
-                                key={el.id}
-                                element={el}
-                                isSelected={el.id === canvasState.selectedId}
-                                onSelect={handleSelectElement}
-                                onMouseDown={handleMouseDown}
-                            />
-                    ))}
-                    
-                    {/* Print/Safety Margins Overlay */}
-                    <div className="absolute top-0 left-0 w-full h-full pointer-events-none border border-red-100 opacity-0 hover:opacity-100 transition-opacity" style={{ zIndex: 9999 }}>
-                        <div className="w-full h-full border-[10mm] border-transparent relative">
-                            <div className="absolute top-0 left-0 text-[8px] text-red-200 font-mono p-1">Bleed/Margin Guide</div>
+                    <div 
+                        id="canvas-area"
+                        className="bg-white origin-top-left"
+                        style={{
+                            width: `${INITIAL_CANVAS_WIDTH}px`,
+                            height: `${INITIAL_CANVAS_HEIGHT}px`,
+                            backgroundColor: activePage.backgroundColor,
+                            backgroundImage: activePage.backgroundImage ? `url(${activePage.backgroundImage})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            transform: `scale(${zoom})`,
+                            cursor: isDragging ? 'grabbing' : 'default'
+                        }}
+                        onClick={(e) => {
+                             // Deselect if clicking on empty canvas area
+                             if(e.target === e.currentTarget) {
+                                 setCanvasState(prev => ({...prev, selectedId: null}));
+                             }
+                        }}
+                    >
+                        {/* SORT ELEMENTS BY Z-INDEX FOR DISPLAY */}
+                        {activeElements
+                            .slice()
+                            .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+                            .map(el => (
+                                <DraggableElement 
+                                    key={el.id}
+                                    element={el}
+                                    isSelected={el.id === canvasState.selectedId}
+                                    onSelect={handleSelectElement}
+                                    onMouseDown={handleMouseDown}
+                                />
+                        ))}
+                        
+                        {/* Print/Safety Margins Overlay */}
+                        <div className="absolute top-0 left-0 w-full h-full pointer-events-none border border-red-100 opacity-0 hover:opacity-100 transition-opacity" style={{ zIndex: 9999 }}>
+                            <div className="w-full h-full border-[10mm] border-transparent relative">
+                                <div className="absolute top-0 left-0 text-[8px] text-red-200 font-mono p-1">Bleed/Margin Guide</div>
+                            </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
             </div>
         </div>

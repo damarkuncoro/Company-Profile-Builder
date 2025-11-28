@@ -41,6 +41,7 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
             style={{
               fontSize: `${element.fontSize || 16}px`,
               fontWeight: element.fontWeight || 'normal',
+              fontStyle: element.fontStyle || 'normal',
               color: element.color || '#000000',
               textAlign: element.textAlign || 'left',
               width: '100%',
@@ -89,7 +90,7 @@ export const DraggableElement: React.FC<DraggableElementProps> = ({
       className={`group hover:border-blue-300 transition-colors ${isSelected ? 'shadow-lg' : ''}`}
     >
       {isSelected && (
-        <div className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
+        <div className="absolute -top-6 left-0 bg-blue-50 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
           <Move size={10} />
           {Math.round(element.x)},{Math.round(element.y)}
         </div>
